@@ -24,8 +24,9 @@ repositories {
 }
 
 dependencies {
-//	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
+	implementation("org.springframework.boot:spring-boot-starter:3.3.4")
+	implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("com.h2database:h2")
 	annotationProcessor("org.projectlombok:lombok")
