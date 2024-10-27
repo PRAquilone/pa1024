@@ -16,7 +16,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@Table(name = "vendors")
+@Table(name = "Vendors") // , schema = "TOOLS_R_US_SCHEMA")
 public class Vendors implements Serializable {
 
     @Id

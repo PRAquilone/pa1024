@@ -1,8 +1,8 @@
 package com.toolsrus.rentals.component;
 
-import com.toolsrus.rentals.db.models.Days;
-import com.toolsrus.rentals.db.models.Frequency;
 import com.toolsrus.rentals.db.models.Holiday;
+import com.toolsrus.rentals.db.models.HolidayDaysOfWeek;
+import com.toolsrus.rentals.db.models.HolidayFrequency;
 import com.toolsrus.rentals.db.models.ToolStatus;
 import com.toolsrus.rentals.db.models.ToolType;
 import com.toolsrus.rentals.db.models.Tools;
@@ -18,7 +18,9 @@ import com.toolsrus.rentals.db.repository.ToolsRepository;
 import com.toolsrus.rentals.db.repository.VendorRepository;
 import lombok.Data;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,8 +41,8 @@ public class ToolRentalData {
     private final ToolTypeRepository toolTypeRepository;
     private final VendorRepository vendorRepository;
 
-    private List<Days> days;
-    private List<Frequency> frequencies;
+    private List<HolidayDaysOfWeek> days;
+    private List<HolidayFrequency> frequencies;
     private List<Holiday> holidays;
     private List<Tools> tools;
     private List<ToolsCharges> toolsCharges;
@@ -64,23 +66,39 @@ public class ToolRentalData {
         this.toolStatusRepository = toolStatusRepository;
         this.toolTypeRepository = toolTypeRepository;
         this.vendorRepository = vendorRepository;
-        populateDataFields();
     }
 
     /**
      * Populate the data fields
      * Note: Must be done after databases are connected
      */
-    private void populateDataFields() {
-        days = daysRepository.findAll();
-        frequencies = frequencyRepository.findAll();
-        holidays = holidayRepository.findAll();
-        tools = toolsRepository.findAll();
-        toolsCharges = toolsChargesRepository.findAll();
-        statuses = toolStatusRepository.findAll();
-        types = toolTypeRepository.findAll();
-        vendors = vendorRepository.findAll();
-    }
+    public void populateDataFields() {
+        if (CollectionUtils.isEmpty(days) ||
+                CollectionUtils.isEmpty(frequencies) ||
+                CollectionUtils.isEmpty(holidays) ||
+                CollectionUtils.isEmpty(tools) ||
+                CollectionUtils.isEmpty(toolsCharges) ||
+                CollectionUtils.isEmpty(statuses) ||
+                CollectionUtils.isEmpty(types) ||
+                CollectionUtils.isEmpty(vendors)) {
+            days = daysRepository.findAll();
+            frequencies = frequencyRepository.findAll();
+            holidays = holidayRepository.findAll();
+            tools = toolsRepository.findAll();
+            toolsCharges = toolsChargesRepository.findAll();
+            statuses = toolStatusRepository.findAll();
+            types = toolTypeRepository.findAll();
+            vendors = vendorRepository.findAll();
+        }
 
+        System.out.println("days " + Arrays.toString(days.toArray()));
+        System.out.println("frequencies " + Arrays.toString(days.toArray()));
+        System.out.println("holidays " + Arrays.toString(holidays.toArray()));
+        System.out.println("tools " + Arrays.toString(tools.toArray()));
+        System.out.println("toolsCharges " + Arrays.toString(toolsCharges.toArray()));
+        System.out.println("statuses " + Arrays.toString(statuses.toArray()));
+        System.out.println("types " + Arrays.toString(types.toArray()));
+        System.out.println("vendors " + Arrays.toString(vendors.toArray()));
+    }
 
 }

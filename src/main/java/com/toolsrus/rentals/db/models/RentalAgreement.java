@@ -19,53 +19,53 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@Table(name = "rental")
+@Table(name = "Tool_Rentals") // , schema = "TOOLS_R_US_SCHEMA")
 public class RentalAgreement implements Serializable {
 
     @Id
-    @Column(name = "rentalId")
+    @Column(name = "id")
     private Integer rentalId;
 
-    @OneToOne
-    private Tools code;
+    @Column(name = "code")
+    private String code;
 
-    @OneToOne
-    private ToolType type;
+    @Column(name = "type")
+    private String type;
 
-    @OneToOne
-    private Vendors brand;
+    @Column(name = "brand")
+    private String brand;
 
-    @Column(name = "rentalDays")
+    @Column(name = "rental_days")
     private Integer rentalDays;
 
-    @Column(name = "checkOutDate")
+    @Column(name = "checkout_date")
     private LocalDate checkOutDate;
 
-    @Column(name = "dueDate")
+    @Column(name = "due_date")
     private LocalDate dueDate;
 
-    @Column(name = "chargeDays")
+    @Column(name = "charge_days")
     private Integer chargeDays;
 
     @Column(name = "due")
     private BigDecimal due;
 
-    @Column(name = "dailyCharge")
+    @Column(name = "daily_charge")
     private BigDecimal dailyCharge;
 
-    @Column(name = "preDiscountCharge")
+    @Column(name = "pre_discount_charge")
     private BigDecimal preDiscountCharge;
 
-    @Column(name = "discountPercent")
+    @Column(name = "discount_percent")
     private BigDecimal discountPercent;
 
-    @Column(name = "discountAmount")
+    @Column(name = "discount_amount")
     private BigDecimal discountAmount;
 
-    @Column(name = "finalCharge")
+    @Column(name = "final_charge")
     private BigDecimal finalCharge;
 
-    @OneToOne
-    private ToolStatus toolStatus;
+    @Column(name = "status")
+    private String toolStatus;
 
 }

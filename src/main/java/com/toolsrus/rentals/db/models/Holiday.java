@@ -17,23 +17,23 @@ import java.io.Serializable;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@Table(name = "holiday")
+@Table(name = "Holidays") // , schema = "TOOLS_R_US_SCHEMA")
 public class Holiday implements Serializable {
 
     @Id
     @Column(name = "name")
     private String name;
 
-    @Column(name = "holidayMonth")
+    @Column(name = "holiday_month")
     private Integer holidayMonth;
 
-    @Column(name = "holidayDay")
+    @Column(name = "holiday_day")
     private Integer holidayDay;
 
-    @OneToOne
-    private Days dayFallsOn;
+    @Column(name = "day_of_the_week")
+    private String dayOfTheWeek;
 
-    @OneToOne
-    private Frequency frequency;
+    @Column(name = "frequency")
+    private String holidayFrequency;
 
 }

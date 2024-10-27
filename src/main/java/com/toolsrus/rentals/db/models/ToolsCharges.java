@@ -18,26 +18,26 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@Table(name = "toolsCharges")
+@Table(name = "Tools_Charges") // , schema = "TOOLS_R_US_SCHEMA")
 public class ToolsCharges implements Serializable {
 
     @Id
-    @Column(name = "chargesId")
+    @Column(name = "id")
     private Integer chargesId;
 
-    @OneToOne
-    private ToolType toolType;
+    @Column(name = "type")
+    private String type;
 
-    @Column(name = "dailyCharge")
+    @Column(name = "daily_charge")
     private BigDecimal dailyCharge;
 
-    @Column(name = "weekDayCharge")
+    @Column(name = "weekday_charge")
     private boolean weekDayCharge;
 
-    @Column(name = "weekEndCharge")
+    @Column(name = "weekend_charge")
     private boolean weekEndCharge;
 
-    @Column(name = "holidayCharge")
+    @Column(name = "holiday_charge")
     private boolean holidayCharge;
 
 }

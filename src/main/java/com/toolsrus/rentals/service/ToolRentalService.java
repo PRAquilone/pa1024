@@ -26,12 +26,13 @@ public class ToolRentalService {
      * @return The rental agreement if the tool can be rented
      */
     public RentalResponse rentalTool(RentalRequest request) {
+        data.populateDataFields();
         RentalResponse response = null;
         try {
             RentalAgreement agreement = RentalAgreement.builder()
-                    .toolStatus(data.getStatuses().get(0))
-                    .type(data.getTypes().get(0))
-                    .code(data.getTools().get(0))
+                    .toolStatus(data.getStatuses().get(0).getStatus())
+                    .type(data.getTypes().get(0).getType())
+                    .code(data.getTools().get(0).getCode())
                     .build();
             response = RentalResponse.builder()
                     .status(HttpStatus.OK)

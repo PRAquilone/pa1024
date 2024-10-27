@@ -27,10 +27,16 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
 	implementation("org.springframework.boot:spring-boot-starter:3.3.4")
 	implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
-	compileOnly("org.projectlombok:lombok")
-	runtimeOnly("com.h2database:h2")
-	annotationProcessor("org.projectlombok:lombok")
+	implementation("org.apache.logging.log4j:log4j-core:2.24.1")
+
+	compileOnly("org.projectlombok:lombok:1.18.34")
+
+	runtimeOnly("com.h2database:h2:2.3.232")
+
+	annotationProcessor("org.projectlombok:lombok:1.18.34")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

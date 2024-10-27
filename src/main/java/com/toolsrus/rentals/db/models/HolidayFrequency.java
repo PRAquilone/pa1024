@@ -16,11 +16,11 @@ import java.io.Serializable;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@Table(name = "days")
-public class Days implements Serializable {
+@Table(name = "Holiday_Frequency") // , schema = "TOOLS_R_US_SCHEMA")
+public class HolidayFrequency implements Serializable {
 
     @Id
-    @Column(name = "dayOfWeek")
-    private String dayOfWeek;
+    @Column(name = "frequency")
+    private String frequency;
 
 }

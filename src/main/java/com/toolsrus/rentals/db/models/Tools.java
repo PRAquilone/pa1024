@@ -3,6 +3,7 @@ package com.toolsrus.rentals.db.models;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,17 +17,17 @@ import java.io.Serializable;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@Table(name = "tools")
+@Table(name = "Tools" ) // , schema = "TOOLS_R_US_SCHEMA")
 public class Tools implements Serializable {
 
     @Id
-    @Column(name = "toolCode")
+    @Column(name = "code")
     private String code;
 
-    @Column(name = "toolType")
+    @Column(name = "type")
     private String type;
 
-    @Column(name = "toolBrand")
+    @Column(name = "brand")
     private String brand;
 
 }

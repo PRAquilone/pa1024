@@ -16,7 +16,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @SuperBuilder
 @Entity
-@Table(name = "toolType")
+@Table(name = "Tool_Type") // , schema = "TOOLS_R_US_SCHEMA")
 public class ToolType implements Serializable {
 
     @Id
