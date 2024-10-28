@@ -1,26 +1,24 @@
 package com.toolsrus.rentals.models;
 
+import com.toolsrus.rentals.db.models.ToolsCharges;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class RentalRequest {
+public class ChargeValues {
 
-    private String code;
+    private BigDecimal fullCharge;
 
-    private Integer rentalDayCount;
+    private BigDecimal discountedCharge;
 
-    private BigDecimal discount;
+    private Integer chargeDaysCount;
 
-    private LocalDate checkOutDate;
-
-
+    private ToolsCharges toolsCharge;
 }

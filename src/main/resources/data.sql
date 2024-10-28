@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS Tool_Rentals (
     due decimal(10,2) NOT NULL,
     daily_charge decimal(5,2) NOT NULL,
     pre_discount_charge decimal(10,2) NOT NULL,
-    discount_percent decimal(3,3),
+    discount_percent decimal(10,2),
     discount_amount decimal(10,2),
     final_charge decimal(10,2) NOT NULL,
     status varchar(10) NOT NULL REFERENCES Tool_Status(status)

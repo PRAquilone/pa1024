@@ -19,4 +19,18 @@ public class RentalResponse {
 
     private HttpStatus status;
 
+    /**
+     * Create an error response
+     *
+     * @param status  The status to send
+     * @param message The error message
+     * @return The created response
+     */
+    public static RentalResponse error(HttpStatus status, String message) {
+        return RentalResponse.builder()
+                .status(status)
+                .message(message)
+                .build();
+    }
+
 }

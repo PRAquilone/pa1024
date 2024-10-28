@@ -101,4 +101,38 @@ public class ToolRentalData {
         System.out.println("vendors " + Arrays.toString(vendors.toArray()));
     }
 
+    /**
+     * Get the tool from the given code
+     *
+     * @param code The code to check
+     * @return The tool if found or null
+     */
+    public Tools getToolsFromCode(String code) {
+        Tools found = null;
+        for (Tools tool : tools) {
+            if (tool.getCode().equalsIgnoreCase(code)) {
+                found = tool;
+                break;
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Get the charge from the given type
+     *
+     * @param type The type to find
+     * @return The tool if found or null
+     */
+    public ToolsCharges getToolsChargesFromType(String type) {
+        ToolsCharges found = null;
+        for (ToolsCharges charge : toolsCharges) {
+            if (charge.getType().equalsIgnoreCase(type)) {
+                found = charge;
+                break;
+            }
+        }
+        return found;
+    }
+
 }

@@ -36,7 +36,7 @@ public class ToolRentalController {
      * @return The response entity
      */
     @PostMapping("/tools/rental/rent")
-    public ResponseEntity<RentalResponse> rentTool(@RequestBody RentalRequest request) {
+    public ResponseEntity<RentalResponse> rentTool(@RequestBody RentalRequest request) throws Exception {
         log.info("Request " + Optional.ofNullable(request).map(RentalRequest::toString).orElse("Empty Request"));
         RentalResponse rentalResponse = toolRentalService.rentalTool(request);
         log.info("Response " + Optional.ofNullable(rentalResponse).map(RentalResponse::toString).orElse("Empty Response"));
