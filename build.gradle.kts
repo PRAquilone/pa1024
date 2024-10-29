@@ -37,14 +37,6 @@ dependencies {
 	annotationProcessor("org.projectlombok:lombok:1.18.34")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test:3.3.5")
-	testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
-	testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
-	testImplementation("org.mockito:mockito-core:5.14.2")
-	testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
-	testImplementation("org.junit.platform:junit-platform-engine:1.11.3")
-
-	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.3")
-	testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.11.3")
 
 }
 

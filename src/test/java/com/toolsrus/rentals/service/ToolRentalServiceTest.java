@@ -16,6 +16,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+
 
 @ExtendWith(MockitoExtension.class)
 class ToolRentalServiceTest {
@@ -42,14 +44,31 @@ class ToolRentalServiceTest {
     @Test
     void testGetToolsCharges() throws Exception {
         // Arrange
-        Mockito.when(data.getToolsFromCode(Mockito.anyString())).thenReturn(Tools.builder().build());
-        Mockito.when(data.getToolsChargesFromType(Mockito.anyString())).thenReturn(ToolsCharges.builder().chargesId(1).build());
+        ToolsCharges toolsCharges = ToolsCharges.builder()
+                .chargesId(1)
+                .dailyCharge(BigDecimal.ONE)
+                .holidayCharge(true)
+                .weekDayCharge(true)
+                .weekEndCharge(true)
+                .build();
+        Mockito.when(data.getToolsFromCode(Mockito.any())).thenReturn(Tools.builder().build());
+        Mockito.when(data.getToolsChargesFromType(Mockito.any())).thenReturn(toolsCharges);
         service = new ToolRentalService(data, repository);
         RentalRequest request = RentalRequest.builder().code("TEST").build();
         // Act
         ToolsCharges result = PrivateMethodTester.tester(service, "getToolsCharges", request);
         // Assert
         Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result.getChargesId()).isNotNull();
+        Assertions.assertThat(result.getChargesId()).isEqualTo(1);
+        Assertions.assertThat(result.getDailyCharge()).isNotNull();
+        Assertions.assertThat(result.getDailyCharge()).isEqualTo(BigDecimal.ONE);
+        Assertions.assertThat(result.getHolidayCharge()).isNotNull();
+        Assertions.assertThat(result.getHolidayCharge()).isEqualTo(true);
+        Assertions.assertThat(result.getWeekDayCharge()).isNotNull();
+        Assertions.assertThat(result.getWeekDayCharge()).isEqualTo(true);
+        Assertions.assertThat(result.getWeekEndCharge()).isNotNull();
+        Assertions.assertThat(result.getWeekEndCharge()).isEqualTo(true);
     }
 
 
