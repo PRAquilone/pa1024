@@ -27,8 +27,8 @@ public class ToolsRentalException extends Exception {
 
     protected ToolsRentalException(String message,
                                    Throwable cause,
-                                   boolean enableSuppression,
-                                   boolean writableStackTrace) {
+                                   Boolean enableSuppression,
+                                   Boolean writableStackTrace) {
         super(Optional.ofNullable(message).orElse(DEFAULT_MESSAGE), cause, enableSuppression, writableStackTrace);
     }
 

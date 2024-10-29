@@ -31,12 +31,12 @@ public class ToolsCharges implements Serializable {
     private BigDecimal dailyCharge;
 
     @Column(name = "weekday_charge")
-    private boolean weekDayCharge;
+    private Boolean weekDayCharge;
 
     @Column(name = "weekend_charge")
-    private boolean weekEndCharge;
+    private Boolean weekEndCharge;
 
     @Column(name = "holiday_charge")
-    private boolean holidayCharge;
+    private Boolean holidayCharge;
 
 }

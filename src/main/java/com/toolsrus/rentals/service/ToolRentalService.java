@@ -210,11 +210,11 @@ public class ToolRentalService {
     private BigDecimal determineChargeAmount(LocalDate key, ToolsCharges toolCharge) {
         BigDecimal fullDayCharge = BigDecimal.ZERO;
         if (determineIfHoliday(key)) {
-            fullDayCharge = addToChargeIfCharging(toolCharge.isHolidayCharge(), fullDayCharge, toolCharge.getDailyCharge());
+            fullDayCharge = addToChargeIfCharging(toolCharge.getHolidayCharge(), fullDayCharge, toolCharge.getDailyCharge());
         } else if (determineIfWeekend(key)) {
-            fullDayCharge = addToChargeIfCharging(toolCharge.isWeekEndCharge(), fullDayCharge, toolCharge.getDailyCharge());
+            fullDayCharge = addToChargeIfCharging(toolCharge.getWeekEndCharge(), fullDayCharge, toolCharge.getDailyCharge());
         } else {
-            fullDayCharge = addToChargeIfCharging(toolCharge.isWeekDayCharge(), fullDayCharge, toolCharge.getDailyCharge());
+            fullDayCharge = addToChargeIfCharging(toolCharge.getWeekDayCharge(), fullDayCharge, toolCharge.getDailyCharge());
         }
         return fullDayCharge;
     }
@@ -227,7 +227,7 @@ public class ToolRentalService {
      * @param valueToAdd    The charge value to add if we are charging
      * @return The day charge possibly updated for new added value
      */
-    private BigDecimal addToChargeIfCharging(boolean chargeThisDay, BigDecimal charge, BigDecimal valueToAdd) {
+    private BigDecimal addToChargeIfCharging(Boolean chargeThisDay, BigDecimal charge, BigDecimal valueToAdd) {
         // Add to charge
         return Optional.ofNullable(charge)
                 .filter(x -> chargeThisDay)
@@ -241,7 +241,7 @@ public class ToolRentalService {
      * @param date The date to check
      * @return True if yes, false otherwise
      */
-    private boolean determineIfWeekend(LocalDate date) {
+    private Boolean determineIfWeekend(LocalDate date) {
         return date.getDayOfWeek().getValue() >= 6;
     }
 
@@ -251,8 +251,8 @@ public class ToolRentalService {
      * @param date The date to check
      * @return True if it is and false otherwise
      */
-    private boolean determineIfHoliday(LocalDate date) {
-        boolean isHoliday = false;
+    private Boolean determineIfHoliday(LocalDate date) {
+        Boolean isHoliday = false;
         for (Holiday holiday : data.getHolidays()) {
             if (Optional.ofNullable(holiday.getHolidayDay()).isPresent()) {
                 isHoliday = (date.getDayOfMonth() == holiday.getHolidayDay()) &&
@@ -275,7 +275,7 @@ public class ToolRentalService {
      * @param holiday The holiday listing
      * @return True if yes, false otherwise
      */
-    private boolean determineIfDayOfWeekMatch(LocalDate date, Holiday holiday) {
+    private Boolean determineIfDayOfWeekMatch(LocalDate date, Holiday holiday) {
         return date.getDayOfWeek().toString().equalsIgnoreCase(holiday.getDayOfTheWeek());
     }
 
@@ -286,8 +286,8 @@ public class ToolRentalService {
      * @param holiday The holiday object
      * @return True if it is the first time the day of the week appears and false otherwise
      */
-    private boolean determineIfFirst(LocalDate date, Holiday holiday) {
-        boolean isHoliday = false;
+    private Boolean determineIfFirst(LocalDate date, Holiday holiday) {
+        Boolean isHoliday = false;
         if (holiday.getHolidayFrequency().equalsIgnoreCase("first")) {
             isHoliday = (date.getDayOfMonth() <= 7);
         }
