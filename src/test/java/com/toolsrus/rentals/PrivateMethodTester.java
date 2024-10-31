@@ -83,9 +83,9 @@ public class PrivateMethodTester {
      * @return Expected exception object found or null
      */
     private static <E extends Exception> Throwable containsExpectedException(Throwable exception, Class<E> expectedException) {
-        if ( (Optional.ofNullable(expectedException).isEmpty()) ||
+        if ((Optional.ofNullable(expectedException).isEmpty()) ||
                 (StringUtils.isBlank(expectedException.getName())) ||
-                (Optional.ofNullable(exception).isEmpty()) ) {
+                (Optional.ofNullable(exception).isEmpty())) {
             return null;
         }
         if (expectedException.getName().contains(exception.getClass().getSimpleName())) {

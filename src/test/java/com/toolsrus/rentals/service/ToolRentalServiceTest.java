@@ -21,7 +21,11 @@ import com.toolsrus.rentals.db.repository.ToolTypeRepository;
 import com.toolsrus.rentals.db.repository.ToolsChargesRepository;
 import com.toolsrus.rentals.db.repository.ToolsRepository;
 import com.toolsrus.rentals.db.repository.VendorRepository;
+import com.toolsrus.rentals.exception.DiscountPercentInvalidException;
+import com.toolsrus.rentals.exception.InvalidRentalRequestException;
 import com.toolsrus.rentals.exception.InvalidRentalRequestToolTypeNotFoundException;
+import com.toolsrus.rentals.exception.RentalDayCountInvalidException;
+import com.toolsrus.rentals.exception.ToolAlreadyRentedException;
 import com.toolsrus.rentals.models.ChargeValues;
 import com.toolsrus.rentals.models.RentalRequest;
 import net.bytebuddy.utility.RandomString;
@@ -37,8 +41,10 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +52,7 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -91,16 +98,13 @@ class ToolRentalServiceTest {
     @Test
     void test_RentalTool_HappyPath() throws Exception {
         // Arrange
-        ToolRentalData toolRentalData = createTestData();
+        ToolRentalData data = buildTestingServiceWithDataAndFindingCode(null);
         RentalRequest rentalRequest = RentalRequest.builder()
-                .code(toolRentalData.getTools().get(0).getCode())
+                .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
                 .rentalDayCount(random.nextInt(1, 10))
                 .build();
-        Mockito.when(rentalAgreementRepository.findByCode(Mockito.any())).thenReturn(null);
-        connector = new ToolRentalConnectorImpl(rentalAgreementRepository, toolRentalData);
-        service = new ToolRentalService(connector);
         // Act
         RentalAgreement result = service.rentalTool(rentalRequest);
         // Assert
@@ -150,7 +154,7 @@ class ToolRentalServiceTest {
                 .chargeDaysCount(1)
                 .build();
         // Act
-        RentalAgreement result = PrivateMethodTester.tester(service, "buildRentalAgreement", rentalRequest, values, 1l);
+        RentalAgreement result = PrivateMethodTester.tester(service, "buildRentalAgreement", rentalRequest, values, 1L);
         // Assert
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.getRentalId()).isNotNull();
@@ -304,7 +308,7 @@ class ToolRentalServiceTest {
                 .weekDayCharge(true)
                 .weekEndCharge(false)
                 .build());
-        LocalDate weekDay = LocalDate.of(2024,11,1);
+        LocalDate weekDay = LocalDate.of(2024, 11, 1);
         // Act
         BigDecimal result = PrivateMethodTester.tester(service, "determineChargeAmount", weekDay, data.getToolsCharges().get(0));
         // Assert
@@ -322,7 +326,7 @@ class ToolRentalServiceTest {
                 .weekDayCharge(false)
                 .weekEndCharge(true)
                 .build());
-        LocalDate weekEnd = LocalDate.of(2024,11,2);
+        LocalDate weekEnd = LocalDate.of(2024, 11, 2);
         // Act
         BigDecimal result = PrivateMethodTester.tester(service, "determineChargeAmount", weekEnd, data.getToolsCharges().get(0));
         // Assert
@@ -340,7 +344,7 @@ class ToolRentalServiceTest {
                 .weekDayCharge(false)
                 .weekEndCharge(false)
                 .build());
-        LocalDate holiday = LocalDate.of(2024,data.getHolidays().get(0).getHolidayMonth(),data.getHolidays().get(0).getHolidayDay());
+        LocalDate holiday = LocalDate.of(2024, data.getHolidays().get(0).getHolidayMonth(), data.getHolidays().get(0).getHolidayDay());
         // Act
         BigDecimal result = PrivateMethodTester.tester(service, "determineChargeAmount", holiday, data.getToolsCharges().get(0));
         // Assert
@@ -348,22 +352,319 @@ class ToolRentalServiceTest {
         Assertions.assertThat(result).isEqualTo(data.getToolsCharges().get(0).getDailyCharge());
     }
 
+    @Test
+    void test_AddToChargeIfCharging_HappyPath() {
+        // Arrange
+        buildTestingServiceWithData();
+        // Act
+        BigDecimal result = PrivateMethodTester.tester(service, "addToChargeIfCharging", true, BigDecimal.ONE, BigDecimal.ONE);
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(BigDecimal.valueOf(2));
+    }
 
+    @Test
+    void test_AddToChargeIfCharging_HappyPath_NoAdd() {
+        // Arrange
+        buildTestingServiceWithData();
+        // Act
+        BigDecimal result = PrivateMethodTester.tester(service, "addToChargeIfCharging", false, BigDecimal.ONE, BigDecimal.valueOf(10));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(BigDecimal.ONE);
+    }
 
+    @Test
+    void test_DetermineIfWeekend_HappyPath_NotWeekend() {
+        // Arrange
+        buildTestingServiceWithData();
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfWeekend", LocalDate.of(2024, 11, 1));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(false);
+    }
 
+    @Test
+    void test_DetermineIfWeekend_HappyPath_Weekend() {
+        // Arrange
+        buildTestingServiceWithData();
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfWeekend", LocalDate.of(2024, 11, 2));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(true);
+    }
 
+    @Test
+    void test_DetermineIfHoliday_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        LocalDate date = LocalDate.of(2024, data.getHolidays().get(0).getHolidayMonth(), data.getHolidays().get(0).getHolidayDay()).plusDays(1);
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfHoliday", date);
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(false);
+    }
 
+    @Test
+    void test_DetermineIfHoliday_HappyPath_HolidayByDate() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        LocalDate date = LocalDate.of(2024, data.getHolidays().get(0).getHolidayMonth(), data.getHolidays().get(0).getHolidayDay());
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfHoliday", date);
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(true);
+    }
 
+    @Test
+    void test_DetermineIfHoliday_HappyPath_HolidayByFrequency() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getHolidays().get(0).setHolidayDay(null);
+        data.getHolidays().get(0).setHolidayFrequency("FIRST");
+        data.getHolidays().get(0).setDayOfTheWeek(DayOfWeek.MONDAY.toString());
+        data.getHolidays().get(0).setHolidayMonth(Month.SEPTEMBER.getValue());
+        connector = new ToolRentalConnectorImpl(rentalAgreementRepository, data);
+        service = new ToolRentalService(connector);
+        LocalDate date = LocalDate.of(2024, 9, 2);
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfHoliday", date);
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(true);
+    }
 
+    @Test
+    void test_DetermineIfMonthMatch_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        LocalDate date = LocalDate.of(2024, data.getHolidays().get(0).getHolidayMonth(), data.getHolidays().get(0).getHolidayDay());
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfMonthMatch", date, data.getHolidays().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(true);
+    }
+
+    @Test
+    void test_DetermineIfMonthMatch_HappyPath_NotMonth() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        LocalDate date = LocalDate.of(2024, data.getHolidays().get(0).getHolidayMonth(), data.getHolidays().get(0).getHolidayDay()).plusDays(32);
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfMonthMatch", date, data.getHolidays().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(false);
+    }
+
+    @Test
+    void test_determineIfDayOfWeekMatch_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getHolidays().get(0).setHolidayDay(null);
+        data.getHolidays().get(0).setHolidayFrequency("FIRST");
+        data.getHolidays().get(0).setDayOfTheWeek(DayOfWeek.MONDAY.toString());
+        data.getHolidays().get(0).setHolidayMonth(Month.SEPTEMBER.getValue());
+        connector = new ToolRentalConnectorImpl(rentalAgreementRepository, data);
+        service = new ToolRentalService(connector);
+        LocalDate date = LocalDate.of(2024, 9, 2);
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfDayOfWeekMatch", date, data.getHolidays().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(true);
+    }
+
+    @Test
+    void test_determineIfDayOfWeekMatch_HappyPath_NotMatch() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getHolidays().get(0).setHolidayDay(null);
+        data.getHolidays().get(0).setHolidayFrequency("FIRST");
+        data.getHolidays().get(0).setDayOfTheWeek(DayOfWeek.MONDAY.toString());
+        data.getHolidays().get(0).setHolidayMonth(Month.SEPTEMBER.getValue());
+        connector = new ToolRentalConnectorImpl(rentalAgreementRepository, data);
+        service = new ToolRentalService(connector);
+        LocalDate date = LocalDate.of(2024, 9, 3);
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfDayOfWeekMatch", date, data.getHolidays().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(false);
+    }
+
+    @Test
+    void test_DetermineIfFirst_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getHolidays().get(0).setHolidayFrequency("FIRST");
+        connector = new ToolRentalConnectorImpl(rentalAgreementRepository, data);
+        service = new ToolRentalService(connector);
+        LocalDate date = LocalDate.of(2024, 9, 2);
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfFirst", date, data.getHolidays().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(true);
+    }
+
+    @Test
+    void test_DetermineIfFirst_HappyPath_NotFirstWeek() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getHolidays().get(0).setHolidayFrequency("FIRST");
+        connector = new ToolRentalConnectorImpl(rentalAgreementRepository, data);
+        service = new ToolRentalService(connector);
+        LocalDate date = LocalDate.of(2024, 9, 9);
+        // Act
+        Boolean result = PrivateMethodTester.tester(service, "determineIfFirst", date, data.getHolidays().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(false);
+    }
+
+    @Test
+    void test_GetRentalDaysChargeMap_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        LocalDate checkOut = LocalDate.of(2024, 1, 2);
+        RentalRequest rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(checkOut)
+                .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
+                .rentalDayCount(random.nextInt(1, 10))
+                .build();
+        // Act
+        Map<LocalDate, ChargeValues> result = PrivateMethodTester.tester(service, "getRentalDaysChargeMap", rentalRequest);
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isNotEmpty();
+        Assertions.assertThat(result.keySet().size()).isEqualTo(rentalRequest.getRentalDayCount());
+        Assertions.assertThat(result).containsKey(checkOut);
+    }
+
+    @Test
+    void test_VerifyRequest_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithDataAndFindingCode(null);
+        RentalRequest rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(LocalDate.of(2024, 1, 2))
+                .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
+                .rentalDayCount(random.nextInt(1, 10))
+                .build();
+        // Act
+        PrivateMethodTester.tester(service, "verifyRequest", rentalRequest);
+        // Assert
+        assertTrue(true, "We passed verification with no exceptions");
+    }
+
+    @Test
+    void test_VerifyRequest_HappyPath_ToolAlreadyRented() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithDataAndFindingCode(1L);
+        RentalRequest rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(LocalDate.of(2024, 1, 2))
+                .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
+                .rentalDayCount(random.nextInt(1, 10))
+                .build();
+        // Act
+        Exception exception = assertThrows(ToolAlreadyRentedException.class, () -> {
+            PrivateMethodTester.testerException(service, "verifyRequest", ToolAlreadyRentedException.class, rentalRequest);
+        });
+        // Assert
+        Assertions.assertThat(exception).isNotNull();
+        Assertions.assertThat(exception).isInstanceOf(ToolAlreadyRentedException.class);
+        Assertions.assertThat(exception.getMessage()).isNotNull();
+        Assertions.assertThat(exception.getMessage()).isEqualTo(ToolAlreadyRentedException.DEFAULT_MESSAGE);
+    }
+
+    @Test
+    void test_VerifyRequest_HappyPath_RequestEmpty() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        // Act
+        Exception exception = assertThrows(InvalidRentalRequestException.class, () -> {
+            PrivateMethodTester.testerException(service, "verifyRequest", InvalidRentalRequestException.class, (Object) null);
+        });
+        // Assert
+        Assertions.assertThat(exception).isNotNull();
+        Assertions.assertThat(exception).isInstanceOf(InvalidRentalRequestException.class);
+        Assertions.assertThat(exception.getMessage()).isNotNull();
+        Assertions.assertThat(exception.getMessage()).isEqualTo(InvalidRentalRequestException.DEFAULT_MESSAGE);
+    }
+
+    @Test
+    void test_VerifyRequest_HappyPath_InvalidRentalDays() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        RentalRequest rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(LocalDate.of(2024, 1, 2))
+                .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
+                .rentalDayCount(0)
+                .build();
+        // Act
+        Exception exception = assertThrows(RentalDayCountInvalidException.class, () -> {
+            PrivateMethodTester.testerException(service, "verifyRequest", RentalDayCountInvalidException.class, rentalRequest);
+        });
+        // Assert
+        Assertions.assertThat(exception).isNotNull();
+        Assertions.assertThat(exception).isInstanceOf(RentalDayCountInvalidException.class);
+        Assertions.assertThat(exception.getMessage()).isNotNull();
+        Assertions.assertThat(exception.getMessage()).isEqualTo(RentalDayCountInvalidException.DEFAULT_MESSAGE);
+    }
+
+    @Test
+    void test_VerifyRequest_HappyPath_InvalidDiscount() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        RentalRequest rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(LocalDate.of(2024, 1, 2))
+                .discount(BigDecimal.valueOf(random.nextDouble(100.01, 9999.99)))
+                .rentalDayCount(random.nextInt(1, 10))
+                .build();
+        // Act
+        Exception exception = assertThrows(DiscountPercentInvalidException.class, () -> {
+            PrivateMethodTester.testerException(service, "verifyRequest", DiscountPercentInvalidException.class, rentalRequest);
+        });
+        // Assert
+        Assertions.assertThat(exception).isNotNull();
+        Assertions.assertThat(exception).isInstanceOf(DiscountPercentInvalidException.class);
+        Assertions.assertThat(exception.getMessage()).isNotNull();
+        Assertions.assertThat(exception.getMessage()).isEqualTo(DiscountPercentInvalidException.DEFAULT_MESSAGE);
+    }
 
 
     /**
      * Build the data connector and inject into service for simple test cases
      *
-     * @return  Return rental data for any testing needs
+     * @return Return rental data for any testing needs
      */
     private ToolRentalData buildTestingServiceWithData() {
         ToolRentalData toolRentalData = createTestData();
+        rentalAgreementRepository = Mockito.mock(RentalAgreementRepository.class);
+        connector = new ToolRentalConnectorImpl(rentalAgreementRepository, toolRentalData);
+        service = new ToolRentalService(connector);
+        return toolRentalData;
+    }
+
+    /**
+     * Build the data connector and inject into service for simple test cases
+     *
+     * @return Return rental data for any testing needs
+     */
+    private ToolRentalData buildTestingServiceWithDataAndFindingCode(Long rentalId) {
+        ToolRentalData toolRentalData = createTestData();
+        rentalAgreementRepository = Mockito.mock(RentalAgreementRepository.class);
+        Mockito.when(rentalAgreementRepository.findByCode(Mockito.anyString())).thenReturn(rentalId);
         connector = new ToolRentalConnectorImpl(rentalAgreementRepository, toolRentalData);
         service = new ToolRentalService(connector);
         return toolRentalData;

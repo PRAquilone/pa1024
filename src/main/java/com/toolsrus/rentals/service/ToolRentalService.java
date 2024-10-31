@@ -16,7 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -244,12 +246,21 @@ public class ToolRentalService {
             }
             if (Optional.ofNullable(holiday.getDayOfTheWeek()).isPresent()) {
                 // Since we only have first, then that is all I am implementing but would implement other if added
-                isHoliday = (isHoliday ||
-                        (determineIfFirst(date, holiday) &&
-                                determineIfDayOfWeekMatch(date, holiday)));
+                isHoliday = (isHoliday || (determineIfFirst(date, holiday) && determineIfMonthMatch(date, holiday) && determineIfDayOfWeekMatch(date, holiday)));
             }
         }
         return isHoliday;
+    }
+
+    /**
+     * Determine if the month matches
+     *
+     * @param date    The date to check
+     * @param holiday the holiday object
+     * @return True if yes, false otherwise
+     */
+    private boolean determineIfMonthMatch(LocalDate date, Holiday holiday) {
+        return Integer.valueOf(date.getMonth().getValue()).equals(Month.of(holiday.getHolidayMonth()).getValue());
     }
 
     /**
@@ -260,7 +271,7 @@ public class ToolRentalService {
      * @return True if yes, false otherwise
      */
     private Boolean determineIfDayOfWeekMatch(LocalDate date, Holiday holiday) {
-        return date.getDayOfWeek().toString().equalsIgnoreCase(holiday.getDayOfTheWeek());
+        return Integer.valueOf(date.getDayOfWeek().getValue()).equals(DayOfWeek.valueOf(holiday.getDayOfTheWeek()).getValue());
     }
 
     /**
@@ -344,7 +355,7 @@ public class ToolRentalService {
      */
     private void verifyRequestNotEmpty(RentalRequest request) throws InvalidRentalRequestException {
         if (Optional.ofNullable(request).isEmpty()) {
-            throw new InvalidRentalRequestException("Rental Request is empty.");
+            throw new InvalidRentalRequestException();
         }
     }
 
