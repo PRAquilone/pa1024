@@ -1,4 +1,4 @@
-package com.toolsrus.rentals.component;
+package com.toolsrus.rentals.db.component;
 
 import com.toolsrus.rentals.db.models.Holiday;
 import com.toolsrus.rentals.db.models.HolidayDaysOfWeek;
@@ -20,7 +20,6 @@ import lombok.Data;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -90,15 +89,6 @@ public class ToolRentalData {
             types = toolTypeRepository.findAll();
             vendors = vendorRepository.findAll();
         }
-
-        System.out.println("days " + Arrays.toString(days.toArray()));
-        System.out.println("frequencies " + Arrays.toString(days.toArray()));
-        System.out.println("holidays " + Arrays.toString(holidays.toArray()));
-        System.out.println("tools " + Arrays.toString(tools.toArray()));
-        System.out.println("toolsCharges " + Arrays.toString(toolsCharges.toArray()));
-        System.out.println("statuses " + Arrays.toString(statuses.toArray()));
-        System.out.println("types " + Arrays.toString(types.toArray()));
-        System.out.println("vendors " + Arrays.toString(vendors.toArray()));
     }
 
     /**

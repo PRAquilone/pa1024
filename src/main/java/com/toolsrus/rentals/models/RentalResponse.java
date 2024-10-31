@@ -20,6 +20,21 @@ public class RentalResponse {
     private HttpStatus status;
 
     /**
+     * Create a good response
+     *
+     * @param status    The status to send
+     * @param agreement The rental agreement
+     * @return The created response
+     */
+    public static RentalResponse ok(RentalAgreement agreement) {
+        return RentalResponse.builder()
+                .status(HttpStatus.OK)
+                .message("SUCCESS")
+                .agreement(agreement)
+                .build();
+    }
+
+    /**
      * Create an error response
      *
      * @param status  The status to send

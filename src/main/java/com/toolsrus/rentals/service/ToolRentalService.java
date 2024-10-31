@@ -1,11 +1,10 @@
 package com.toolsrus.rentals.service;
 
-import com.toolsrus.rentals.component.ToolRentalData;
+import com.toolsrus.rentals.db.connector.ToolRentalConnector;
 import com.toolsrus.rentals.db.models.Holiday;
 import com.toolsrus.rentals.db.models.RentalAgreement;
 import com.toolsrus.rentals.db.models.Tools;
 import com.toolsrus.rentals.db.models.ToolsCharges;
-import com.toolsrus.rentals.db.repository.RentalAgreementRepository;
 import com.toolsrus.rentals.exception.DiscountPercentInvalidException;
 import com.toolsrus.rentals.exception.InvalidRentalRequestException;
 import com.toolsrus.rentals.exception.InvalidRentalRequestToolTypeNotFoundException;
@@ -13,8 +12,7 @@ import com.toolsrus.rentals.exception.RentalDayCountInvalidException;
 import com.toolsrus.rentals.exception.ToolAlreadyRentedException;
 import com.toolsrus.rentals.models.ChargeValues;
 import com.toolsrus.rentals.models.RentalRequest;
-import com.toolsrus.rentals.models.RentalResponse;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,18 +23,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class ToolRentalService {
 
     public static final int LESS_THAN = -1;
     public static final int GREATER_THAN = 1;
-    private final ToolRentalData data;
 
-    private final RentalAgreementRepository rentalAgreementRepository;
+    private final ToolRentalConnector connector;
 
-    public ToolRentalService(ToolRentalData data, RentalAgreementRepository rentalAgreementRepository) {
-        this.data = data;
-        this.rentalAgreementRepository = rentalAgreementRepository;
+    public ToolRentalService(ToolRentalConnector toolRentalConnector) {
+        this.connector = toolRentalConnector;
     }
 
 
@@ -46,22 +43,18 @@ public class ToolRentalService {
      * @param request The rental request
      * @return The rental agreement if the tool can be rented
      */
-    public RentalResponse rentalTool(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException {
+    public RentalAgreement rentalTool(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException, InvalidRentalRequestToolTypeNotFoundException {
 
         // Verify the request
         verifyRequest(request);
 
         // Create response object
-        RentalResponse response;
+        RentalAgreement response;
 
         try {
 
-            // Populate data if not already
-            data.populateDataFields();
-
             // Create id for rental agreement
-            Long rentalId = rentalAgreementRepository.count() + 1;
-
+            Long rentalId = connector.getTotalAgreements() + 1;
 
             // Create a charge days map
             Map<LocalDate, ChargeValues> charges = getRentalDaysChargeMap(request);
@@ -72,25 +65,17 @@ public class ToolRentalService {
             // Determine the final chage
             ChargeValues finalCharges = buildFinalCharges(charges);
 
-            // Build the rental agreemtn
-            RentalAgreement agreement = buildRentalAgreement(request, finalCharges, rentalId);
+            // Build the rental agreement
+            response = buildRentalAgreement(request, finalCharges, rentalId);
 
             // Add the object to the database
-            rentalAgreementRepository.save(agreement);
-
-            // Build the response
-            response = RentalResponse.builder()
-                    .status(HttpStatus.OK)
-                    .agreement(agreement)
-                    .message(Optional.ofNullable(agreement).map(x -> "Rental Agreement Attached").orElse("Unable to rent tool"))
-                    .build();
+            connector.saveRentalAgreement(response);
 
         } catch (Exception exception) {
-            response = RentalResponse.builder()
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .message(exception.getMessage())
-                    .build();
+            log.error("Error encountered attempting to create rental agreement due to " + exception.getMessage());
+            throw exception;
         }
+
         return response;
     }
 
@@ -127,7 +112,7 @@ public class ToolRentalService {
     private RentalAgreement buildRentalAgreement(RentalRequest request, ChargeValues finalCharges, Long rentalId) {
         return RentalAgreement.builder()
                 .rentalId(rentalId.intValue())
-                .brand(data.getToolsFromCode(request.getCode()).getBrand())
+                .brand(connector.getData().getToolsFromCode(request.getCode()).getBrand())
                 .code(request.getCode())
                 .due(finalCharges.getDiscountedCharge())
                 .type(finalCharges.getToolsCharge().getType())
@@ -153,8 +138,8 @@ public class ToolRentalService {
      */
     private Map<LocalDate, ChargeValues> determineDayCharges(RentalRequest request, Map<LocalDate, ChargeValues> charges) throws InvalidRentalRequestToolTypeNotFoundException {
         Set<LocalDate> keyDates = charges.keySet();
+        ToolsCharges toolCharge = getToolsCharges(request);
         for (LocalDate key : keyDates) {
-            ToolsCharges toolCharge = getToolsCharges(request);
             BigDecimal fullDayCharge = determineChargeAmount(key, toolCharge);
             BigDecimal discountDayCharge = determineDiscountAmount(request, fullDayCharge);
             charges.put(key, ChargeValues.builder()
@@ -175,8 +160,8 @@ public class ToolRentalService {
      * @throws InvalidRentalRequestToolTypeNotFoundException Throws if tool charges for this tool code/type not found
      */
     private ToolsCharges getToolsCharges(RentalRequest request) throws InvalidRentalRequestToolTypeNotFoundException {
-        Tools tool = data.getToolsFromCode(request.getCode());
-        ToolsCharges toolCharge = data.getToolsChargesFromType(Optional.ofNullable(tool).map(Tools::getType).orElse(null));
+        Tools tool = connector.getData().getToolsFromCode(request.getCode());
+        ToolsCharges toolCharge = connector.getData().getToolsChargesFromType(Optional.ofNullable(tool).map(Tools::getType).orElse(null));
         if (Optional.ofNullable(toolCharge).isEmpty()) {
             throw new InvalidRentalRequestToolTypeNotFoundException();
         }
@@ -253,7 +238,7 @@ public class ToolRentalService {
      */
     private Boolean determineIfHoliday(LocalDate date) {
         Boolean isHoliday = false;
-        for (Holiday holiday : data.getHolidays()) {
+        for (Holiday holiday : connector.getData().getHolidays()) {
             if (Optional.ofNullable(holiday.getHolidayDay()).isPresent()) {
                 isHoliday = (date.getDayOfMonth() == holiday.getHolidayDay()) &&
                         (date.getMonth().getValue() == holiday.getHolidayMonth());
@@ -371,7 +356,7 @@ public class ToolRentalService {
      * @throws ToolAlreadyRentedException The exception to throw if already rented
      */
     private void verifyToolNotAlreadyRentedOut(RentalRequest request) throws ToolAlreadyRentedException {
-        Long found = rentalAgreementRepository.findByCode(request.getCode());
+        Long found = connector.findRentalAgreementByCode(request.getCode());
         if (Optional.ofNullable(found).isPresent()) {
             throw new ToolAlreadyRentedException();
         }
