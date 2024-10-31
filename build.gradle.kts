@@ -29,6 +29,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web:3.3.5")
 	implementation("org.apache.logging.log4j:log4j-core:2.24.1")
 	implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
+	implementation("commons-io:commons-io:2.17.0")
 
 	compileOnly("org.projectlombok:lombok:1.18.34")
 
@@ -37,6 +38,11 @@ dependencies {
 	annotationProcessor("org.projectlombok:lombok:1.18.34")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test:3.3.5")
+	testImplementation("org.junit.vintage:junit-vintage-engine:5.11.3")
+	testImplementation("io.cucumber:cucumber-core:7.20.1")
+	testImplementation("io.cucumber:cucumber-java:7.20.1")
+	testImplementation("io.cucumber:cucumber-junit:7.20.1")
+	testImplementation("io.cucumber:cucumber-spring:7.20.1")
 
 	testCompileOnly("org.projectlombok:lombok:1.18.34")
 

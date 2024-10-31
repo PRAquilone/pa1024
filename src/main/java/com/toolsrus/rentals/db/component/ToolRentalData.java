@@ -70,6 +70,8 @@ public class ToolRentalData {
     /**
      * Populate the data fields
      * Note: Must be done after databases are connected
+     * Note: Tried afterPropoertySet and PostConstruct but both executed before the data was loaded.  Had to resort to this.
+     * It is not optimal but it is working.
      */
     public void populateDataFields() {
         if (CollectionUtils.isEmpty(days) ||
