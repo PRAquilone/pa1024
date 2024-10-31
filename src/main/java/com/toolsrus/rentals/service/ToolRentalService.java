@@ -178,8 +178,7 @@ public class ToolRentalService {
      */
     private BigDecimal determineDiscountAmount(RentalRequest request, BigDecimal fullDayCharge) {
         BigDecimal discountDayCharge = BigDecimal.ZERO;
-        if ((Optional.ofNullable(fullDayCharge).isPresent()) &&
-                (request.getDiscount().compareTo(BigDecimal.ZERO) != 0)) {
+        if (request.getDiscount().compareTo(BigDecimal.ZERO) != 0) {
             discountDayCharge = fullDayCharge.subtract(fullDayCharge.multiply(request.getDiscount().divide(BigDecimal.valueOf(100))));
         }
         return discountDayCharge;

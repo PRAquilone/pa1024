@@ -259,6 +259,104 @@ class ToolRentalServiceTest {
         Assertions.assertThat(exception.getMessage()).isEqualTo(InvalidRentalRequestToolTypeNotFoundException.DEFAULT_MESSAGE);
     }
 
+    @Test
+    void test_DetermineDiscountAmount_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        RentalRequest request = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(LocalDate.of(2024, 1, 2))
+                .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
+                .rentalDayCount(random.nextInt(1, 10))
+                .build();
+        BigDecimal expected = BigDecimal.ONE.subtract(BigDecimal.ONE.multiply(request.getDiscount().divide(BigDecimal.valueOf(100))));
+        // Act
+        BigDecimal result = PrivateMethodTester.tester(service, "determineDiscountAmount", request, BigDecimal.ONE);
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    void test_DetermineDiscountAmount_HappyPath_NoDiscount() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        RentalRequest request = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(LocalDate.of(2024, 1, 2))
+                .discount(BigDecimal.ZERO)
+                .rentalDayCount(random.nextInt(1, 10))
+                .build();
+        // Act
+        BigDecimal result = PrivateMethodTester.tester(service, "determineDiscountAmount", request, BigDecimal.ONE);
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void test_DetermineChargeAmount_HappyPath_Weekday() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getToolsCharges().add(0, ToolsCharges.builder()
+                .dailyCharge(BigDecimal.valueOf(random.nextDouble(0.01, 999.99)))
+                .holidayCharge(false)
+                .weekDayCharge(true)
+                .weekEndCharge(false)
+                .build());
+        LocalDate weekDay = LocalDate.of(2024,11,1);
+        // Act
+        BigDecimal result = PrivateMethodTester.tester(service, "determineChargeAmount", weekDay, data.getToolsCharges().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(data.getToolsCharges().get(0).getDailyCharge());
+    }
+
+    @Test
+    void test_DetermineChargeAmount_HappyPath_WeekEnd() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getToolsCharges().add(0, ToolsCharges.builder()
+                .dailyCharge(BigDecimal.valueOf(random.nextDouble(0.01, 999.99)))
+                .holidayCharge(false)
+                .weekDayCharge(false)
+                .weekEndCharge(true)
+                .build());
+        LocalDate weekEnd = LocalDate.of(2024,11,2);
+        // Act
+        BigDecimal result = PrivateMethodTester.tester(service, "determineChargeAmount", weekEnd, data.getToolsCharges().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(data.getToolsCharges().get(0).getDailyCharge());
+    }
+
+    @Test
+    void test_DetermineChargeAmount_HappyPath_Holiday() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        data.getToolsCharges().add(0, ToolsCharges.builder()
+                .dailyCharge(BigDecimal.valueOf(random.nextDouble(0.01, 999.99)))
+                .holidayCharge(true)
+                .weekDayCharge(false)
+                .weekEndCharge(false)
+                .build());
+        LocalDate holiday = LocalDate.of(2024,data.getHolidays().get(0).getHolidayMonth(),data.getHolidays().get(0).getHolidayDay());
+        // Act
+        BigDecimal result = PrivateMethodTester.tester(service, "determineChargeAmount", holiday, data.getToolsCharges().get(0));
+        // Assert
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(data.getToolsCharges().get(0).getDailyCharge());
+    }
+
+
+
+
+
+
+
+
+
+
     /**
      * Build the data connector and inject into service for simple test cases
      *
@@ -298,9 +396,9 @@ class ToolRentalServiceTest {
                 .chargesId(random.nextInt(1000, 10000))
                 .type(toolType.getType())
                 .dailyCharge(BigDecimal.valueOf(random.nextDouble(0.01, 999.99)))
-                .holidayCharge(random.nextBoolean())
-                .weekDayCharge(random.nextBoolean())
-                .weekEndCharge(random.nextBoolean())
+                .holidayCharge(true)
+                .weekDayCharge(true)
+                .weekEndCharge(true)
                 .build();
         Holiday holiday = Holiday.builder()
                 .name("TEST")
