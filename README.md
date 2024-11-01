@@ -23,21 +23,13 @@ The demonstration is to code and test a simple tool rental application.
 This is a list of assumptions or choices made with respect to the requirments
 
 * Assumption to create only a back end REST API since no UI was required .
-* Decision to use an in memory H2 Database which if was a real application would be replaced with a hosted DB. However
-  it will be coded so that the connector implementation could simply be replaced with another database connection and
-  not interrupt the rest of the code.
-* Decision to have all important static DB data (data not changing outside of initial data load) be pre-loaded when the
-  first request comes in. This does sacrifice memory for faster performance. If this was a real POS this would have to
-  be replaced with appropriate data calls to load the data that is specifically needed. For example, the ToolsCharges
-  table would only load the row for the tool to be rented whereas here the entire table is loaded.
+* Decision to use an in memory H2 Database which if was a real application would be replaced with a hosted DB. However it will be coded so that the connector implementation could simply be replaced with another database connection and not interrupt the rest of the code.
+* Decision to have all important static DB data (data not changing outside of initial data load) be pre-loaded when the first request comes in. This does sacrifice memory for faster performance. If this was a real POS this would have to be replaced with appropriate data calls to load the data that is specifically needed. For example, the ToolsCharges table would only load the row for the tool to be rented whereas here the entire table is loaded.
 * Decision to use gradle to build the project because I find it more flexible and readable than maven
 * Decision to create custom one time use exceptions for the errors we are throwing.
-* Decision to wrap the Rental Agreement (object returned) in a Rental Response that includes httpstatus and a message.
-  This will allow for use of the same rental object when sending an error that has no rental agreement.
-* Decision proof of working tests from requirements below are in
-  the[ToolRentalProofTests.feature](src/test/resources/ToolRentalProofTests.feature) cucumber test file.
-* Note the second feature file ([RentalRequest.feature](src/test/resources/RentalRequest.feature)) contains additional
-  tests to verify functionality.
+* Decision to wrap the Rental Agreement (object returned) in a Rental Response that includes httpstatus and a message.  This will allow for use of the same rental object when sending an error that has no rental agreement.
+* Decision proof of working tests from requirements below are in the[ToolRentalProofTests.feature](src/test/resources/ToolRentalProofTests.feature) cucumber test file.
+* Note the second feature file ([RentalRequest.feature](src/test/resources/RentalRequest.feature)) contains additional tests to verify functionality.
 
 ### Holidays
 
