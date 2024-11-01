@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class RentalRequest {
+public class ToolRequest {
 
     private String code;
 

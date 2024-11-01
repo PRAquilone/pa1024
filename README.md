@@ -1,7 +1,9 @@
 # Rental Tool Demo Example
 
-### Purpose
+## Purpose
 This code was written to solely demonstrate an ability to code a REST API endpoint in Java.
+
+## Requirements and Notes
 
 ### Specifications
 The demonstration is to code and test a simple tool rental application.
@@ -28,6 +30,13 @@ These are the only holidays that are used.
 * Independence Day, July 4th - If falls on weekend, it is observed on the closest weekday (if Sat, then Friday before, if Sunday, then Monday after)
 * Labor Day - First Monday in September
 
+## Technical Details
+
+### REST API Endpoints
+There are two endpoints in this.  
+* Rental ("/tools/rental/rent") this allows you to rent a tool if it has not been rented and the request is verified
+* Return ("/tools/rental/rent/return") this allows you to return a rented tool so that you could rent it again if the tool code is found to be already rented
+
 ### Request Data
 This is the list of request data expected for rental
 * Tool code - See tool table above
@@ -36,13 +45,20 @@ days)
 * Discount percent - As a whole number, 0-100 (e.g. 20 = 20%)
 * Check out date
 
-Sample Request:
+Sample Rental Request:
 ```declarative
 {
-    "code": "LADW",
-    "rentalDayCount" : 3,
-    "discount": 10,
-    "checkOutDate": "2024-10-20"
+"code": "LADW",
+"rentalDayCount" : 3,
+"discount": 10,
+"checkOutDate": "2024-10-20"
+}
+```
+
+Sample Return Request:
+```declarative
+{
+    "code": "LADW"
 }
 ```
 
@@ -64,27 +80,35 @@ to cents.
 rounded half up to cents.
 * Final charge - Calculated as pre-discount charge - discount amount.
 
-Sample Response (for the sample request above)
+Sample Rental Response (for the sample request above)
 ```declarative
 {
-    "agreement": {
-        "rentalId": 1,
-        "code": "LADW",
-        "type": "Ladder",
-        "brand": "Werner",
-        "rentalDays": 3,
-        "checkOutDate": "2024-10-20",
-        "dueDate": "2024-10-23",
-        "chargeDays": 3,
-        "due": 5.373,
-        "dailyCharge": 1.99,
-        "preDiscountCharge": 5.97,
-        "discountPercent": 10,
-        "discountAmount": 0.597,
-        "finalCharge": 5.373,
-        "toolStatus": "ACTIVE"
-    },
-    "message": "SUCCESS",
+"agreement": {
+"rentalId": 1,
+"code": "LADW",
+"type": "Ladder",
+"brand": "Werner",
+"rentalDays": 3,
+"checkOutDate": "2024-10-20",
+"dueDate": "2024-10-23",
+"chargeDays": 3,
+"due": 5.373,
+"dailyCharge": 1.99,
+"preDiscountCharge": 5.97,
+"discountPercent": 10,
+"discountAmount": 0.597,
+"finalCharge": 5.373,
+"toolStatus": "ACTIVE"
+},
+"message": "SUCCESS",
+"status": "OK"
+}
+```
+
+Sample Return Response (for the sample request above)
+```declarative
+{
+    "message": "Successfully returned tool LADW",
     "status": "OK"
 }
 ```
@@ -93,6 +117,8 @@ Sample Response (for the sample request above)
 Below is the list of required exceptions
 * Rental day count is not 1 or greater
 * Discount percent is not in the range 0-100
+
+## Testing Requirements 
 
 ### Proof Test Cases
 As stated these tests are in the ToolRentalProofTests.feature cucumber test file

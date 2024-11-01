@@ -28,7 +28,7 @@ import com.toolsrus.rentals.exception.RentalDayCountInvalidException;
 import com.toolsrus.rentals.exception.ToolAlreadyRentedException;
 import com.toolsrus.rentals.exception.ToolCodeNotFoundException;
 import com.toolsrus.rentals.models.ChargeValues;
-import com.toolsrus.rentals.models.RentalRequest;
+import com.toolsrus.rentals.models.ToolRequest;
 import net.bytebuddy.utility.RandomString;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
@@ -100,22 +100,22 @@ class ToolRentalServiceTest {
     void test_returnRentalTool_HappyPath() throws Exception {
         // Arrange
         ToolRentalData data = buildTestingServiceWithDataAndFindingCode(null);
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
                 .rentalDayCount(random.nextInt(1, 10))
                 .build();
         // Act Part 1
-        RentalAgreement result = service.rentalTool(rentalRequest);
+        RentalAgreement result = service.rentalTool(toolRequest);
         // Assert Part 1
         Assertions.assertThat(result).isNotNull();
         // Arrange Part 2
-        rentalRequest = RentalRequest.builder()
+        toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .build();
         // Act Part 2
-        service.returnRentalTool(rentalRequest);
+        service.returnRentalTool(toolRequest);
         // Assert Part 2
         assertTrue(true, "We successfully returned a rental");
     }
@@ -124,14 +124,14 @@ class ToolRentalServiceTest {
     void test_RentalTool_HappyPath() throws Exception {
         // Arrange
         ToolRentalData data = buildTestingServiceWithDataAndFindingCode(null);
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
                 .rentalDayCount(random.nextInt(1, 10))
                 .build();
         // Act
-        RentalAgreement result = service.rentalTool(rentalRequest);
+        RentalAgreement result = service.rentalTool(toolRequest);
         // Assert
         Assertions.assertThat(result).isNotNull();
     }
@@ -166,7 +166,7 @@ class ToolRentalServiceTest {
     void test_BuildRentalAgreement_HappyPath() {
         // Arrange
         ToolRentalData toolRentalData = buildTestingServiceWithData();
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(toolRentalData.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
@@ -179,23 +179,23 @@ class ToolRentalServiceTest {
                 .chargeDaysCount(1)
                 .build();
         // Act
-        RentalAgreement result = PrivateMethodTester.tester(service, "buildRentalAgreement", rentalRequest, values, 1L);
+        RentalAgreement result = PrivateMethodTester.tester(service, "buildRentalAgreement", toolRequest, values, 1L);
         // Assert
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.getRentalId()).isNotNull();
         Assertions.assertThat(result.getRentalId()).isEqualTo(1);
         Assertions.assertThat(result.getCode()).isNotNull();
-        Assertions.assertThat(result.getCode()).isEqualTo(rentalRequest.getCode());
+        Assertions.assertThat(result.getCode()).isEqualTo(toolRequest.getCode());
         Assertions.assertThat(result.getType()).isNotNull();
         Assertions.assertThat(result.getType()).isEqualTo(toolRentalData.getTools().get(0).getType());
         Assertions.assertThat(result.getBrand()).isNotNull();
         Assertions.assertThat(result.getBrand()).isEqualTo(toolRentalData.getVendors().get(0).getBrand());
         Assertions.assertThat(result.getRentalDays()).isNotNull();
-        Assertions.assertThat(result.getRentalDays()).isEqualTo(rentalRequest.getRentalDayCount());
+        Assertions.assertThat(result.getRentalDays()).isEqualTo(toolRequest.getRentalDayCount());
         Assertions.assertThat(result.getCheckOutDate()).isNotNull();
-        Assertions.assertThat(result.getCheckOutDate()).isEqualTo(rentalRequest.getCheckOutDate());
+        Assertions.assertThat(result.getCheckOutDate()).isEqualTo(toolRequest.getCheckOutDate());
         Assertions.assertThat(result.getDueDate()).isNotNull();
-        Assertions.assertThat(result.getDueDate()).isEqualTo(rentalRequest.getCheckOutDate().plusDays(rentalRequest.getRentalDayCount()));
+        Assertions.assertThat(result.getDueDate()).isEqualTo(toolRequest.getCheckOutDate().plusDays(toolRequest.getRentalDayCount()));
         Assertions.assertThat(result.getChargeDays()).isNotNull();
         Assertions.assertThat(result.getChargeDays()).isEqualTo(values.getChargeDaysCount());
         Assertions.assertThat(result.getDue()).isNotNull();
@@ -205,7 +205,7 @@ class ToolRentalServiceTest {
         Assertions.assertThat(result.getPreDiscountCharge()).isNotNull();
         Assertions.assertThat(result.getPreDiscountCharge()).isEqualTo(values.getFullCharge());
         Assertions.assertThat(result.getDiscountPercent()).isNotNull();
-        Assertions.assertThat(result.getDiscountPercent()).isEqualTo(rentalRequest.getDiscount());
+        Assertions.assertThat(result.getDiscountPercent()).isEqualTo(toolRequest.getDiscount());
         Assertions.assertThat(result.getDiscountAmount()).isNotNull();
         Assertions.assertThat(result.getDiscountAmount()).isEqualTo(values.getFullCharge().subtract(values.getDiscountedCharge()));
         Assertions.assertThat(result.getFinalCharge()).isNotNull();
@@ -219,7 +219,7 @@ class ToolRentalServiceTest {
     void test_DetermineDayCharges_HappyPath() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
-        RentalRequest request = RentalRequest.builder()
+        ToolRequest request = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
@@ -252,7 +252,7 @@ class ToolRentalServiceTest {
     void test_GetToolsCharges_HappyPath() throws Exception {
         // Arrange
         ToolRentalData toolRentalData = buildTestingServiceWithData();
-        RentalRequest request = RentalRequest.builder().code(toolRentalData.getTools().get(0).getCode()).build();
+        ToolRequest request = ToolRequest.builder().code(toolRentalData.getTools().get(0).getCode()).build();
         // Act
         ToolsCharges result = PrivateMethodTester.tester(service, "getToolsCharges", request);
         // Assert
@@ -276,7 +276,7 @@ class ToolRentalServiceTest {
         toolRentalData.setToolsCharges(new ArrayList<>());
         connector = new ToolRentalConnectorImpl(rentalAgreementRepository, toolRentalData);
         service = new ToolRentalService(connector);
-        RentalRequest request = RentalRequest.builder().code("TEST").build();
+        ToolRequest request = ToolRequest.builder().code("TEST").build();
         // Act
         Exception exception = assertThrows(InvalidRentalRequestToolTypeNotFoundException.class, () -> {
             ToolsCharges result = PrivateMethodTester.testerException(service, "getToolsCharges", InvalidRentalRequestToolTypeNotFoundException.class, request);
@@ -292,7 +292,7 @@ class ToolRentalServiceTest {
     void test_DetermineDiscountAmount_HappyPath() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
-        RentalRequest request = RentalRequest.builder()
+        ToolRequest request = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
@@ -310,7 +310,7 @@ class ToolRentalServiceTest {
     void test_DetermineDiscountAmount_HappyPath_NoDiscount() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
-        RentalRequest request = RentalRequest.builder()
+        ToolRequest request = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.ZERO)
@@ -558,18 +558,18 @@ class ToolRentalServiceTest {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
         LocalDate checkOut = LocalDate.of(2024, 1, 2);
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(checkOut)
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
                 .rentalDayCount(random.nextInt(1, 10))
                 .build();
         // Act
-        Map<LocalDate, ChargeValues> result = PrivateMethodTester.tester(service, "getRentalDaysChargeMap", rentalRequest);
+        Map<LocalDate, ChargeValues> result = PrivateMethodTester.tester(service, "getRentalDaysChargeMap", toolRequest);
         // Assert
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result).isNotEmpty();
-        Assertions.assertThat(result.keySet().size()).isEqualTo(rentalRequest.getRentalDayCount());
+        Assertions.assertThat(result.keySet().size()).isEqualTo(toolRequest.getRentalDayCount());
         Assertions.assertThat(result).containsKey(checkOut);
     }
 
@@ -577,14 +577,14 @@ class ToolRentalServiceTest {
     void test_verifyRequestForRental_ForRental_HappyPath() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithDataAndFindingCode(null);
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
                 .rentalDayCount(random.nextInt(1, 10))
                 .build();
         // Act
-        PrivateMethodTester.tester(service, "verifyRequestForRental", rentalRequest);
+        PrivateMethodTester.tester(service, "verifyRequestForRental", toolRequest);
         // Assert
         assertTrue(true, "We passed verification with no exceptions");
     }
@@ -593,7 +593,7 @@ class ToolRentalServiceTest {
     void test_verifyRequestForRental_ForRental_HappyPath_ToolAlreadyRented() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithDataAndFindingCode(1L);
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
@@ -601,7 +601,7 @@ class ToolRentalServiceTest {
                 .build();
         // Act
         Exception exception = assertThrows(ToolAlreadyRentedException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequestForRental", ToolAlreadyRentedException.class, rentalRequest);
+            PrivateMethodTester.testerException(service, "verifyRequestForRental", ToolAlreadyRentedException.class, toolRequest);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
@@ -630,7 +630,7 @@ class ToolRentalServiceTest {
     void test_verifyRequestForRental_ForRental_HappyPath_InvalidRentalDays() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
@@ -638,7 +638,7 @@ class ToolRentalServiceTest {
                 .build();
         // Act
         Exception exception = assertThrows(RentalDayCountInvalidException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequestForRental", RentalDayCountInvalidException.class, rentalRequest);
+            PrivateMethodTester.testerException(service, "verifyRequestForRental", RentalDayCountInvalidException.class, toolRequest);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
@@ -651,7 +651,7 @@ class ToolRentalServiceTest {
     void test_verifyRequestForRental_ForRental_HappyPath_InvalidDiscount() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .checkOutDate(LocalDate.of(2024, 1, 2))
                 .discount(BigDecimal.valueOf(random.nextDouble(100.01, 9999.99)))
@@ -659,7 +659,7 @@ class ToolRentalServiceTest {
                 .build();
         // Act
         Exception exception = assertThrows(DiscountPercentInvalidException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequestForRental", DiscountPercentInvalidException.class, rentalRequest);
+            PrivateMethodTester.testerException(service, "verifyRequestForRental", DiscountPercentInvalidException.class, toolRequest);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
@@ -672,11 +672,11 @@ class ToolRentalServiceTest {
     void test_verifyRequestForReturn_ForRental_HappyPath() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
-        RentalRequest rentalRequest = RentalRequest.builder()
+        ToolRequest toolRequest = ToolRequest.builder()
                 .code(data.getTools().get(0).getCode())
                 .build();
         // Act
-        PrivateMethodTester.tester(service, "verifyRequestForReturn", rentalRequest);
+        PrivateMethodTester.tester(service, "verifyRequestForReturn", toolRequest);
         // Assert
         assertTrue(true, "We passed verification with no exceptions");
     }
@@ -699,10 +699,10 @@ class ToolRentalServiceTest {
     @Test
     void test_verifyRequestForReturn_ForRental_HappyPat_NoToolCode() {
         // Arrange
-        RentalRequest rentalRequest = RentalRequest.builder().build();
+        ToolRequest toolRequest = ToolRequest.builder().build();
         // Act
         Exception exception = assertThrows(ToolCodeNotFoundException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequestForReturn", ToolCodeNotFoundException.class, rentalRequest);
+            PrivateMethodTester.testerException(service, "verifyRequestForReturn", ToolCodeNotFoundException.class, toolRequest);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
@@ -733,7 +733,7 @@ class ToolRentalServiceTest {
     private ToolRentalData buildTestingServiceWithDataAndFindingCode(Long rentalId) {
         ToolRentalData toolRentalData = createTestData();
         rentalAgreementRepository = Mockito.mock(RentalAgreementRepository.class);
-        Mockito.when(rentalAgreementRepository.findByCode(Mockito.anyString())).thenReturn(rentalId);
+        Mockito.when(rentalAgreementRepository.findByCode(Mockito.anyString(), Mockito.anyString())).thenReturn(rentalId);
         connector = new ToolRentalConnectorImpl(rentalAgreementRepository, toolRentalData);
         service = new ToolRentalService(connector);
         return toolRentalData;

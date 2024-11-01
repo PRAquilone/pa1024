@@ -1,7 +1,7 @@
 package com.toolsrus.rentals.cucumber;
 
 import com.toolsrus.rentals.db.repository.RentalAgreementRepository;
-import com.toolsrus.rentals.models.RentalRequest;
+import com.toolsrus.rentals.models.ToolRequest;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
@@ -46,11 +46,29 @@ public class ToolRentalStepDefinitions extends ToolRentalApplicationTest {
      */
     @When("^the client calls /tools/rental/rent tool code (.+) on checkout of (\\d+)-(\\d+)-(\\d+) for (\\d+) days with a discount of (\\d+) percent$")
     public void RequestRental(String code, Integer year, Integer month, Integer day, Integer rentalDays, Integer discount) throws Throwable {
-        executePost(RentalRequest.builder()
+        executeRentalPost(ToolRequest.builder()
                 .code(code)
                 .checkOutDate(LocalDate.of(year, month, day))
                 .discount(BigDecimal.valueOf(discount))
                 .rentalDayCount(rentalDays)
+                .build());
+    }
+
+    /**
+     * Execute a rest call to the service to get a response
+     *
+     * @param code       The code of the tool to rent
+     * @param year       The year of the checkout date
+     * @param month      The month of the checkout date
+     * @param day        The day of the checkout date
+     * @param rentalDays The number of rental days
+     * @param discount   The discount applied if any
+     * @throws Throwable Exceptions can be thrown if an error is encountered
+     */
+    @When("^the client calls /tools/rental/rent/return tool code (.+)$")
+    public void RequestReturn(String code) throws Throwable {
+        executeReturnPost(ToolRequest.builder()
+                .code(code)
                 .build());
     }
 

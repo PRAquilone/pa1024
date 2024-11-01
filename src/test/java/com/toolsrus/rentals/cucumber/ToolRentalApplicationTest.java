@@ -1,8 +1,8 @@
 package com.toolsrus.rentals.cucumber;
 
 import com.toolsrus.rentals.ToolsRUsApplication;
-import com.toolsrus.rentals.models.RentalRequest;
 import com.toolsrus.rentals.models.RentalResponse;
+import com.toolsrus.rentals.models.ToolRequest;
 import io.cucumber.spring.CucumberContextConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
@@ -20,7 +20,9 @@ import java.io.IOException;
 @SpringBootTest(classes = ToolsRUsApplication.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class ToolRentalApplicationTest {
 
-    private final static String url = "http://localhost:8080/tools/rental/rent";
+    private final static String rentalUrl = "http://localhost:8080/tools/rental/rent";
+
+    private final static String returnUrl = "http://localhost:8080/tools/rental/rent/return";
 
     public static RentalResponse rentalResponse;
 
@@ -29,18 +31,40 @@ public class ToolRentalApplicationTest {
     /**
      * Execute the rest post call to the service
      *
-     * @param rentalRequest The request we are making
+     * @param toolRequest The request we are making
      * @throws IOException If we encounter an exception will be thrown
      */
-    public void executePost(RentalRequest rentalRequest) throws IOException {
+    public void executeRentalPost(ToolRequest toolRequest) throws IOException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Lists.newArrayList(MediaType.APPLICATION_JSON));
-        HttpEntity<RentalRequest> request = new HttpEntity<>(rentalRequest, headers);
+        HttpEntity<ToolRequest> request = new HttpEntity<>(toolRequest, headers);
         try {
-            rentalResponse = restTemplate.postForObject(url, request, RentalResponse.class);
+            rentalResponse = restTemplate.postForObject(rentalUrl, request, RentalResponse.class);
         } catch (Exception exception) {
-            log.error("Encountered exception " + exception.getMessage(), exception);
+            log.error("Rental Encountered exception " + exception.getMessage(), exception);
+            rentalResponse = RentalResponse.builder()
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .message(exception.getMessage())
+                    .build();
+        }
+    }
+
+    /**
+     * Execute the rest post call to the service
+     *
+     * @param toolRequest The request we are making
+     * @throws IOException If we encounter an exception will be thrown
+     */
+    public void executeReturnPost(ToolRequest toolRequest) throws IOException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(Lists.newArrayList(MediaType.APPLICATION_JSON));
+        HttpEntity<ToolRequest> request = new HttpEntity<>(toolRequest, headers);
+        try {
+            rentalResponse = restTemplate.postForObject(returnUrl, request, RentalResponse.class);
+        } catch (Exception exception) {
+            log.error("Return Encountered exception " + exception.getMessage(), exception);
             rentalResponse = RentalResponse.builder()
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .message(exception.getMessage())

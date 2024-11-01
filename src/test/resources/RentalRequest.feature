@@ -33,3 +33,21 @@ Feature: Tool Rental Application Additional Tests
       | message                                                          |
       | The tool is already rented and unable to be rented at this time. |
 
+  Scenario: Testing a call to the server to request a rental and verify it is rented by attempting to rent then return the rental and see that it can be rented again
+    When the client calls /tools/rental/rent tool code JAKD on checkout of 2024-10-20 for 5 days with a discount of 10 percent
+    Then the client receives status code of 200
+    And the client receives the following rental agreement
+      | rentalId | code | type       | brand  | rentalDays | checkOutDate | dueDate    | chargeDays | due    | dailyCharge | preDiscountCharge | discountPercent | discountAmount | finalCharge | toolStatus |
+      | 1        | JAKD | JackHammer | DeWalt | 5          | 2024-10-20   | 2024-10-25 | 4          | 10.764 | 2.99        | 11.96             | 10              | 1.196          | 10.764      | ACTIVE     |
+    When the client calls /tools/rental/rent tool code JAKD on checkout of 2024-10-21 for 5 days with a discount of 1 percent
+    Then the client receives status error code of 500
+    And the client receives the following error response for tool already rented
+      | message                                                          |
+      | The tool is already rented and unable to be rented at this time. |
+    When the client calls /tools/rental/rent/return tool code JAKD
+    Then the client receives status code of 200
+    When the client calls /tools/rental/rent tool code JAKD on checkout of 2024-10-20 for 5 days with a discount of 10 percent
+    Then the client receives status code of 200
+    And the client receives the following rental agreement
+      | rentalId | code | type       | brand  | rentalDays | checkOutDate | dueDate    | chargeDays | due    | dailyCharge | preDiscountCharge | discountPercent | discountAmount | finalCharge | toolStatus |
+      | 2        | JAKD | JackHammer | DeWalt | 5          | 2024-10-20   | 2024-10-25 | 4          | 10.764 | 2.99        | 11.96             | 10              | 1.196          | 10.764      | ACTIVE     |

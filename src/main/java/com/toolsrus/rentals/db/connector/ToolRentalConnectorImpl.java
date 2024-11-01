@@ -63,7 +63,7 @@ public class ToolRentalConnectorImpl implements ToolRentalConnector {
     public Long findRentalAgreementByCode(String code) {
         Long foundId = null;
         if (StringUtils.isNotBlank(code)) {
-            foundId = rentalAgreementRepository.findByCode(code);
+            foundId = rentalAgreementRepository.findByCode(code, "ACTIVE");
         }
         return foundId;
     }
@@ -77,7 +77,7 @@ public class ToolRentalConnectorImpl implements ToolRentalConnector {
     @Override
     public void updateRentalAgreementToClosed(Long id) {
         if (Optional.ofNullable(id).isPresent()) {
-            rentalAgreementRepository.updateStatusById(id);
+            rentalAgreementRepository.updateStatusById(id, "CLOSED");
         }
     }
 }

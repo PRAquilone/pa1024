@@ -12,7 +12,7 @@ import com.toolsrus.rentals.exception.RentalDayCountInvalidException;
 import com.toolsrus.rentals.exception.ToolAlreadyRentedException;
 import com.toolsrus.rentals.exception.ToolCodeNotFoundException;
 import com.toolsrus.rentals.models.ChargeValues;
-import com.toolsrus.rentals.models.RentalRequest;
+import com.toolsrus.rentals.models.ToolRequest;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class ToolRentalService {
      *
      * @param request The rental request
      */
-    public void returnRentalTool(RentalRequest request) throws InvalidRentalRequestException, ToolCodeNotFoundException {
+    public void returnRentalTool(ToolRequest request) throws InvalidRentalRequestException, ToolCodeNotFoundException {
 
         // Verify the request
         verifyRequestForReturn(request);
@@ -63,7 +63,7 @@ public class ToolRentalService {
      * @param request The rental request
      * @return The rental agreement if the tool can be rented
      */
-    public RentalAgreement rentalTool(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException, InvalidRentalRequestToolTypeNotFoundException {
+    public RentalAgreement rentalTool(ToolRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException, InvalidRentalRequestToolTypeNotFoundException {
 
         // Verify the request
         verifyRequestForRental(request);
@@ -129,7 +129,7 @@ public class ToolRentalService {
      * @param rentalId     The rental ID
      * @return The built object
      */
-    private RentalAgreement buildRentalAgreement(RentalRequest request, ChargeValues finalCharges, Long rentalId) {
+    private RentalAgreement buildRentalAgreement(ToolRequest request, ChargeValues finalCharges, Long rentalId) {
         return RentalAgreement.builder()
                 .rentalId(rentalId.intValue())
                 .brand(connector.getData().getToolsFromCode(request.getCode()).getBrand())
@@ -156,7 +156,7 @@ public class ToolRentalService {
      * @param charges The rental charge days map
      * @return The map of charges
      */
-    private Map<LocalDate, ChargeValues> determineDayCharges(RentalRequest request, Map<LocalDate, ChargeValues> charges) throws InvalidRentalRequestToolTypeNotFoundException {
+    private Map<LocalDate, ChargeValues> determineDayCharges(ToolRequest request, Map<LocalDate, ChargeValues> charges) throws InvalidRentalRequestToolTypeNotFoundException {
         Set<LocalDate> keyDates = charges.keySet();
         ToolsCharges toolCharge = getToolsCharges(request);
         for (LocalDate key : keyDates) {
@@ -179,7 +179,7 @@ public class ToolRentalService {
      * @return The tool charges if found, throws exception if not
      * @throws InvalidRentalRequestToolTypeNotFoundException Throws if tool charges for this tool code/type not found
      */
-    private ToolsCharges getToolsCharges(RentalRequest request) throws InvalidRentalRequestToolTypeNotFoundException {
+    private ToolsCharges getToolsCharges(ToolRequest request) throws InvalidRentalRequestToolTypeNotFoundException {
         Tools tool = connector.getData().getToolsFromCode(request.getCode());
         ToolsCharges toolCharge = connector.getData().getToolsChargesFromType(Optional.ofNullable(tool).map(Tools::getType).orElse(null));
         if (Optional.ofNullable(toolCharge).isEmpty()) {
@@ -196,7 +196,7 @@ public class ToolRentalService {
      * @param fullDayCharge The full charge already determined
      * @return The discount charge amount
      */
-    private BigDecimal determineDiscountAmount(RentalRequest request, BigDecimal fullDayCharge) {
+    private BigDecimal determineDiscountAmount(ToolRequest request, BigDecimal fullDayCharge) {
         BigDecimal discountDayCharge = BigDecimal.ZERO;
         if (request.getDiscount().compareTo(BigDecimal.ZERO) != 0) {
             discountDayCharge = fullDayCharge.subtract(fullDayCharge.multiply(request.getDiscount().divide(BigDecimal.valueOf(100))));
@@ -316,7 +316,7 @@ public class ToolRentalService {
      * @param request The request containing the check out date and number of rental days
      * @return The created map with the dates as keys and null values to be populated
      */
-    private Map<LocalDate, ChargeValues> getRentalDaysChargeMap(RentalRequest request) {
+    private Map<LocalDate, ChargeValues> getRentalDaysChargeMap(ToolRequest request) {
         LocalDate checkout = request.getCheckOutDate();
         Map<LocalDate, ChargeValues> charges = new HashMap<>();
         for (int i = 0; i < request.getRentalDayCount(); i++) {
@@ -334,7 +334,7 @@ public class ToolRentalService {
      * @throws RentalDayCountInvalidException  Throws if rental day coint is less than 1
      * @throws DiscountPercentInvalidException Throws if discount is not between 0-100
      */
-    private void verifyRequestForRental(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException {
+    private void verifyRequestForRental(ToolRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException {
         verifyRequestNotEmpty(request);
         verifyValidRentalNumberOfDays(request);
         verifyCorrectDiscountAmount(request);
@@ -348,7 +348,7 @@ public class ToolRentalService {
      * @throws InvalidRentalRequestException Throws if request is empty
      * @throws ToolCodeNotFoundException     Throws if rental day coint is less than 1
      */
-    private void verifyRequestForReturn(RentalRequest request) throws InvalidRentalRequestException, ToolCodeNotFoundException {
+    private void verifyRequestForReturn(ToolRequest request) throws InvalidRentalRequestException, ToolCodeNotFoundException {
         verifyRequestNotEmpty(request);
         verifyRequestToolCodeNotEmpty(request);
     }
@@ -359,7 +359,7 @@ public class ToolRentalService {
      * @param request The request object
      * @throws DiscountPercentInvalidException Thrown if discount amount is invalid
      */
-    private void verifyCorrectDiscountAmount(RentalRequest request) throws DiscountPercentInvalidException {
+    private void verifyCorrectDiscountAmount(ToolRequest request) throws DiscountPercentInvalidException {
         if ((Optional.ofNullable(request.getDiscount()).isEmpty()) ||
                 (request.getDiscount().compareTo(BigDecimal.ZERO) == LESS_THAN) ||
                 (request.getDiscount().compareTo(BigDecimal.valueOf(100)) == GREATER_THAN)) {
@@ -373,7 +373,7 @@ public class ToolRentalService {
      * @param request The request object
      * @throws RentalDayCountInvalidException Thrown if rental days count is less than or equal to 1
      */
-    private void verifyValidRentalNumberOfDays(RentalRequest request) throws RentalDayCountInvalidException {
+    private void verifyValidRentalNumberOfDays(ToolRequest request) throws RentalDayCountInvalidException {
         if ((Optional.ofNullable(request.getRentalDayCount()).isEmpty()) ||
                 (request.getRentalDayCount() < 1)) {
             throw new RentalDayCountInvalidException();
@@ -386,7 +386,7 @@ public class ToolRentalService {
      * @param request The request object
      * @throws InvalidRentalRequestException Thrown if the request is empty
      */
-    private void verifyRequestNotEmpty(RentalRequest request) throws InvalidRentalRequestException {
+    private void verifyRequestNotEmpty(ToolRequest request) throws InvalidRentalRequestException {
         if (Optional.ofNullable(request).isEmpty()) {
             throw new InvalidRentalRequestException();
         }
@@ -398,7 +398,7 @@ public class ToolRentalService {
      * @param request The request object
      * @throws ToolCodeNotFoundException Thrown if the request is empty
      */
-    private void verifyRequestToolCodeNotEmpty(RentalRequest request) throws ToolCodeNotFoundException {
+    private void verifyRequestToolCodeNotEmpty(ToolRequest request) throws ToolCodeNotFoundException {
         if ((Optional.ofNullable(request).isPresent()) &&
                 (StringUtils.isBlank(request.getCode()))) {
             throw new ToolCodeNotFoundException();
@@ -411,7 +411,7 @@ public class ToolRentalService {
      * @param request The request
      * @throws ToolAlreadyRentedException The exception to throw if already rented
      */
-    private void verifyToolNotAlreadyRentedOut(RentalRequest request) throws ToolAlreadyRentedException {
+    private void verifyToolNotAlreadyRentedOut(ToolRequest request) throws ToolAlreadyRentedException {
         Long found = connector.findRentalAgreementByCode(request.getCode());
         if (Optional.ofNullable(found).isPresent()) {
             throw new ToolAlreadyRentedException();
