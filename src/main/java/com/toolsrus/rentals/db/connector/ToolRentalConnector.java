@@ -34,5 +34,13 @@ public interface ToolRentalConnector {
      */
     Long findRentalAgreementByCode(String code);
 
+    /**
+     * Update a rental agreement to closed
+     *
+     * @param id The id of the row to update
+     * @return The id of the rental agreement or null
+     */
+    void updateRentalAgreementToClosed(Long id);
+
 
 }

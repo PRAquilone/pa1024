@@ -6,6 +6,7 @@ import com.toolsrus.rentals.exception.InvalidRentalRequestException;
 import com.toolsrus.rentals.exception.InvalidRentalRequestToolTypeNotFoundException;
 import com.toolsrus.rentals.exception.RentalDayCountInvalidException;
 import com.toolsrus.rentals.exception.ToolAlreadyRentedException;
+import com.toolsrus.rentals.exception.ToolCodeNotFoundException;
 import com.toolsrus.rentals.models.RentalRequest;
 import com.toolsrus.rentals.models.RentalResponse;
 import com.toolsrus.rentals.service.ToolRentalService;
@@ -46,7 +47,23 @@ public class ToolRentalController {
     public ResponseEntity<RentalResponse> rentTool(@RequestBody RentalRequest request) throws Exception {
         log.info("Request {}", Optional.ofNullable(request).map(RentalRequest::toString).orElse("Empty Request"));
         try {
-            return callToCreateRentalAgreemtn(request);
+            return callToCreateRentalAgreement(request);
+        } catch (Exception exception) {
+            return buildErrorResponse(exception);
+        }
+    }
+
+    /**
+     * Rent a tool
+     *
+     * @param request The rental request
+     * @return The response entity
+     */
+    @PostMapping("/tools/rental/rent/return")
+    public ResponseEntity<RentalResponse> returnRental(@RequestBody RentalRequest request) throws Exception {
+        log.info("Request {}", Optional.ofNullable(request).map(RentalRequest::toString).orElse("Empty Request"));
+        try {
+            return callToReturnRental(request);
         } catch (Exception exception) {
             return buildErrorResponse(exception);
         }
@@ -67,6 +84,23 @@ public class ToolRentalController {
     }
 
     /**
+     * Call the service and attempt to return a rental
+     *
+     * @param request The request object
+     * @return A message display success
+     * @throws InvalidRentalRequestException Exception that can be thrown
+     * @throws ToolCodeNotFoundException     Exception that can be thrown
+     */
+    private ResponseEntity<RentalResponse> callToReturnRental(RentalRequest request) throws InvalidRentalRequestException, ToolCodeNotFoundException {
+        toolRentalService.returnRentalTool(request);
+        RentalResponse rentalResponse = RentalResponse.success("Successfully returned tool " + request.getCode());
+        log.info("Response {}", Optional.ofNullable(rentalResponse).map(RentalResponse::toString).orElse("Empty Response"));
+        return Optional.ofNullable(rentalResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.internalServerError().body(rentalResponse));
+    }
+
+    /**
      * Call the service and attempt to create a rental
      *
      * @param request The request object
@@ -76,7 +110,7 @@ public class ToolRentalController {
      * @throws DiscountPercentInvalidException Exception that can be thrown
      * @throws ToolAlreadyRentedException      Exception that can be thrown
      */
-    private ResponseEntity<RentalResponse> callToCreateRentalAgreemtn(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException, InvalidRentalRequestToolTypeNotFoundException {
+    private ResponseEntity<RentalResponse> callToCreateRentalAgreement(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException, InvalidRentalRequestToolTypeNotFoundException {
         RentalAgreement agreement = toolRentalService.rentalTool(request);
         RentalResponse rentalResponse = RentalResponse.ok(agreement);
         log.info("Response {}", Optional.ofNullable(rentalResponse).map(RentalResponse::toString).orElse("Empty Response"));

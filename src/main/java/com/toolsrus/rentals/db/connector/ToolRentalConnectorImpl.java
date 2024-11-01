@@ -67,4 +67,17 @@ public class ToolRentalConnectorImpl implements ToolRentalConnector {
         }
         return foundId;
     }
+
+    /**
+     * Update a rental agreement to closed
+     *
+     * @param id The id of the row to update
+     * @return The id of the rental agreement or null
+     */
+    @Override
+    public void updateRentalAgreementToClosed(Long id) {
+        if (Optional.ofNullable(id).isPresent()) {
+            rentalAgreementRepository.updateStatusById(id);
+        }
+    }
 }

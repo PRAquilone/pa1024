@@ -4,16 +4,18 @@ import com.toolsrus.rentals.ToolsRUsApplication;
 import com.toolsrus.rentals.models.RentalRequest;
 import com.toolsrus.rentals.models.RentalResponse;
 import io.cucumber.spring.CucumberContextConfiguration;
+import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
-import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 
+@Slf4j
 @CucumberContextConfiguration
 @SpringBootTest(classes = ToolsRUsApplication.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class ToolRentalApplicationTest {
@@ -26,6 +28,7 @@ public class ToolRentalApplicationTest {
 
     /**
      * Execute the rest post call to the service
+     *
      * @param rentalRequest The request we are making
      * @throws IOException If we encounter an exception will be thrown
      */
@@ -37,7 +40,11 @@ public class ToolRentalApplicationTest {
         try {
             rentalResponse = restTemplate.postForObject(url, request, RentalResponse.class);
         } catch (Exception exception) {
-            Assertions.fail("Encountered exception " + exception.getMessage(), exception);
+            log.error("Encountered exception " + exception.getMessage(), exception);
+            rentalResponse = RentalResponse.builder()
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .message(exception.getMessage())
+                    .build();
         }
     }
 

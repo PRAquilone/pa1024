@@ -95,5 +95,19 @@ public class ToolRentalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(RentalResponse.error(HttpStatus.BAD_REQUEST, exception.getMessage()));
     }
 
+    /**
+     * Handle the tool not found when returning a tool
+     *
+     * @param exception The exception that was thrown
+     * @return. The response entity with the error
+     */
+    @ExceptionHandler(ToolCodeNotFoundException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<RentalResponse> toolCodeNotFoundException(ToolCodeNotFoundException exception) {
+        return ResponseEntity
+                .badRequest()
+                .body(RentalResponse.error(HttpStatus.BAD_REQUEST, exception.getMessage()));
+    }
+
 
 }

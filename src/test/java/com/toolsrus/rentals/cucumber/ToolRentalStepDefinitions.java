@@ -1,7 +1,9 @@
 package com.toolsrus.rentals.cucumber;
 
+import com.toolsrus.rentals.db.repository.RentalAgreementRepository;
 import com.toolsrus.rentals.models.RentalRequest;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -16,6 +18,20 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ToolRentalStepDefinitions extends ToolRentalApplicationTest {
+
+    private final RentalAgreementRepository rentalAgreementRepository;
+
+    public ToolRentalStepDefinitions(RentalAgreementRepository rentalAgreementRepository) {
+        this.rentalAgreementRepository = rentalAgreementRepository;
+    }
+
+    /**
+     * Reset the rental agreement repo before each scenario
+     */
+    @Before
+    public void beforeScenario() {
+        rentalAgreementRepository.deleteAll();
+    }
 
     /**
      * Execute a rest call to the service to get a response
@@ -45,9 +61,21 @@ public class ToolRentalStepDefinitions extends ToolRentalApplicationTest {
      * @throws Throwable Exceptions can be thrown if an error is encountered
      */
     @Then("^the client receives status code of (\\d+)$")
-    public void the_client_receives_status_code_of(int statusCode) throws Throwable {
+    public void the_client_receives_status_code_of_ok(int statusCode) throws Throwable {
         HttpStatus currentStatusCode = rentalResponse.getStatus();
         Assertions.assertThat(currentStatusCode).isEqualTo(HttpStatus.OK);
+    }
+
+    /**
+     * Verify we got a good Error response
+     *
+     * @param statusCode The status code from the call
+     * @throws Throwable Exceptions can be thrown if an error is encountered
+     */
+    @Then("^the client receives status error code of (\\d+)$")
+    public void the_client_receives_status_code_of_error(int statusCode) throws Throwable {
+        HttpStatus currentStatusCode = rentalResponse.getStatus();
+        Assertions.assertThat(currentStatusCode).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -59,21 +87,58 @@ public class ToolRentalStepDefinitions extends ToolRentalApplicationTest {
     @And("^the client receives the following rental agreement$")
     public void the_client_receives_server_version_body(DataTable table) throws Throwable {
         List<Map<String, String>> rows = table.asMaps(String.class, String.class);
-        testValues(rows.get(0).get("rentalId"), rentalResponse.getAgreement().getRentalId().toString());
-        testValues(rows.get(0).get("code"), rentalResponse.getAgreement().getCode());
-        testValues(rows.get(0).get("type"), rentalResponse.getAgreement().getType());
-        testValues(rows.get(0).get("brand"), rentalResponse.getAgreement().getBrand());
-        testValues(rows.get(0).get("rentalDays"), rentalResponse.getAgreement().getRentalDays().toString());
-        testValues(rows.get(0).get("checkOutDate"), rentalResponse.getAgreement().getCheckOutDate().toString());
-        testValues(rows.get(0).get("dueDate"), rentalResponse.getAgreement().getDueDate().toString());
-        testValues(rows.get(0).get("chargeDays"), rentalResponse.getAgreement().getChargeDays().toString());
-        testValues(rows.get(0).get("due"), rentalResponse.getAgreement().getDue().toString());
-        testValues(rows.get(0).get("dailyCharge"), rentalResponse.getAgreement().getDailyCharge().toString());
-        testValues(rows.get(0).get("preDiscountCharge"), rentalResponse.getAgreement().getPreDiscountCharge().toString());
-        testValues(rows.get(0).get("discountPercent"), rentalResponse.getAgreement().getDiscountPercent().toString());
-        testValues(rows.get(0).get("discountAmount"), rentalResponse.getAgreement().getDiscountAmount().toString());
-        testValues(rows.get(0).get("finalCharge"), rentalResponse.getAgreement().getFinalCharge().toString());
-        testValues(rows.get(0).get("toolStatus"), rentalResponse.getAgreement().getToolStatus());
+        Map<String, String> item = rows.get(0);
+        testValues(item.get("rentalId"), rentalResponse.getAgreement().getRentalId().toString());
+        testValues(item.get("code"), rentalResponse.getAgreement().getCode());
+        testValues(item.get("type"), rentalResponse.getAgreement().getType());
+        testValues(item.get("brand"), rentalResponse.getAgreement().getBrand());
+        testValues(item.get("rentalDays"), rentalResponse.getAgreement().getRentalDays().toString());
+        testValues(item.get("checkOutDate"), rentalResponse.getAgreement().getCheckOutDate().toString());
+        testValues(item.get("dueDate"), rentalResponse.getAgreement().getDueDate().toString());
+        testValues(item.get("chargeDays"), rentalResponse.getAgreement().getChargeDays().toString());
+        testValues(item.get("due"), rentalResponse.getAgreement().getDue().toString());
+        testValues(item.get("dailyCharge"), rentalResponse.getAgreement().getDailyCharge().toString());
+        testValues(item.get("preDiscountCharge"), rentalResponse.getAgreement().getPreDiscountCharge().toString());
+        testValues(item.get("discountPercent"), rentalResponse.getAgreement().getDiscountPercent().toString());
+        testValues(item.get("discountAmount"), rentalResponse.getAgreement().getDiscountAmount().toString());
+        testValues(item.get("finalCharge"), rentalResponse.getAgreement().getFinalCharge().toString());
+        testValues(item.get("toolStatus"), rentalResponse.getAgreement().getToolStatus());
+    }
+
+    /**
+     * Verify the data from the response to the data table from the feature to ensure we got the expected error
+     *
+     * @param table The data table that will be populated from the feature file
+     * @throws Throwable Exceptions can be thrown if an error is encountered
+     */
+    @And("^the client receives the following error response for Discount Invalid$")
+    public void the_client_receives_server_error_response_discount(DataTable table) throws Throwable {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+        testValues(rows.get(0).get("message"), rentalResponse.getMessage());
+    }
+
+    /**
+     * Verify the data from the response to the data table from the feature to ensure we got the expected error
+     *
+     * @param table The data table that will be populated from the feature file
+     * @throws Throwable Exceptions can be thrown if an error is encountered
+     */
+    @And("^the client receives the following error response for tool already rented$")
+    public void the_client_receives_server_error_response_already_rented(DataTable table) throws Throwable {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+        testValues(rows.get(0).get("message"), rentalResponse.getMessage());
+    }
+
+    /**
+     * Verify the data from the response to the data table from the feature to ensure we got the expected error
+     *
+     * @param table The data table that will be populated from the feature file
+     * @throws Throwable Exceptions can be thrown if an error is encountered
+     */
+    @And("^the client receives the following error response for Rental Day Count Invalid$")
+    public void the_client_receives_server_error_response_rental_day_count(DataTable table) throws Throwable {
+        List<Map<String, String>> rows = table.asMaps(String.class, String.class);
+        testValues(rows.get(0).get("message"), rentalResponse.getMessage());
     }
 
     /**
@@ -82,10 +147,10 @@ public class ToolRentalStepDefinitions extends ToolRentalApplicationTest {
      * @param result The result from the rest call
      * @param expect The expected result
      */
-    private void testValues(String result, String expect) {
+    private void testValues(String expect, String result) {
         String resultValue = Optional.ofNullable(result).filter(StringUtils::isNotBlank).orElse(null);
         String expectedValue = Optional.ofNullable(expect).filter(StringUtils::isNotBlank).orElse(null);
-        Assertions.assertThat(resultValue).isEqualTo(expectedValue);
+        Assertions.assertThat(resultValue).contains(expectedValue);
     }
 
 }

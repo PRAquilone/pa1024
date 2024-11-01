@@ -26,6 +26,7 @@ import com.toolsrus.rentals.exception.InvalidRentalRequestException;
 import com.toolsrus.rentals.exception.InvalidRentalRequestToolTypeNotFoundException;
 import com.toolsrus.rentals.exception.RentalDayCountInvalidException;
 import com.toolsrus.rentals.exception.ToolAlreadyRentedException;
+import com.toolsrus.rentals.exception.ToolCodeNotFoundException;
 import com.toolsrus.rentals.models.ChargeValues;
 import com.toolsrus.rentals.models.RentalRequest;
 import net.bytebuddy.utility.RandomString;
@@ -94,6 +95,30 @@ class ToolRentalServiceTest {
         service = new ToolRentalService(connector);
     }
 
+
+    @Test
+    void test_returnRentalTool_HappyPath() throws Exception {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithDataAndFindingCode(null);
+        RentalRequest rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .checkOutDate(LocalDate.of(2024, 1, 2))
+                .discount(BigDecimal.valueOf(random.nextDouble(0.01, 99.99)))
+                .rentalDayCount(random.nextInt(1, 10))
+                .build();
+        // Act Part 1
+        RentalAgreement result = service.rentalTool(rentalRequest);
+        // Assert Part 1
+        Assertions.assertThat(result).isNotNull();
+        // Arrange Part 2
+        rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .build();
+        // Act Part 2
+        service.returnRentalTool(rentalRequest);
+        // Assert Part 2
+        assertTrue(true, "We successfully returned a rental");
+    }
 
     @Test
     void test_RentalTool_HappyPath() throws Exception {
@@ -549,7 +574,7 @@ class ToolRentalServiceTest {
     }
 
     @Test
-    void test_VerifyRequest_HappyPath() {
+    void test_verifyRequestForRental_ForRental_HappyPath() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithDataAndFindingCode(null);
         RentalRequest rentalRequest = RentalRequest.builder()
@@ -559,13 +584,13 @@ class ToolRentalServiceTest {
                 .rentalDayCount(random.nextInt(1, 10))
                 .build();
         // Act
-        PrivateMethodTester.tester(service, "verifyRequest", rentalRequest);
+        PrivateMethodTester.tester(service, "verifyRequestForRental", rentalRequest);
         // Assert
         assertTrue(true, "We passed verification with no exceptions");
     }
 
     @Test
-    void test_VerifyRequest_HappyPath_ToolAlreadyRented() {
+    void test_verifyRequestForRental_ForRental_HappyPath_ToolAlreadyRented() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithDataAndFindingCode(1L);
         RentalRequest rentalRequest = RentalRequest.builder()
@@ -576,7 +601,7 @@ class ToolRentalServiceTest {
                 .build();
         // Act
         Exception exception = assertThrows(ToolAlreadyRentedException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequest", ToolAlreadyRentedException.class, rentalRequest);
+            PrivateMethodTester.testerException(service, "verifyRequestForRental", ToolAlreadyRentedException.class, rentalRequest);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
@@ -586,12 +611,12 @@ class ToolRentalServiceTest {
     }
 
     @Test
-    void test_VerifyRequest_HappyPath_RequestEmpty() {
+    void test_verifyRequestForRental_HappyPath_RequestForRentalEmpty() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
         // Act
         Exception exception = assertThrows(InvalidRentalRequestException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequest", InvalidRentalRequestException.class, (Object) null);
+            PrivateMethodTester.testerException(service, "verifyRequestForRental", InvalidRentalRequestException.class, (Object) null);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
@@ -600,8 +625,9 @@ class ToolRentalServiceTest {
         Assertions.assertThat(exception.getMessage()).isEqualTo(InvalidRentalRequestException.DEFAULT_MESSAGE);
     }
 
+
     @Test
-    void test_VerifyRequest_HappyPath_InvalidRentalDays() {
+    void test_verifyRequestForRental_ForRental_HappyPath_InvalidRentalDays() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
         RentalRequest rentalRequest = RentalRequest.builder()
@@ -612,7 +638,7 @@ class ToolRentalServiceTest {
                 .build();
         // Act
         Exception exception = assertThrows(RentalDayCountInvalidException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequest", RentalDayCountInvalidException.class, rentalRequest);
+            PrivateMethodTester.testerException(service, "verifyRequestForRental", RentalDayCountInvalidException.class, rentalRequest);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
@@ -622,7 +648,7 @@ class ToolRentalServiceTest {
     }
 
     @Test
-    void test_VerifyRequest_HappyPath_InvalidDiscount() {
+    void test_verifyRequestForRental_ForRental_HappyPath_InvalidDiscount() {
         // Arrange
         ToolRentalData data = buildTestingServiceWithData();
         RentalRequest rentalRequest = RentalRequest.builder()
@@ -633,13 +659,56 @@ class ToolRentalServiceTest {
                 .build();
         // Act
         Exception exception = assertThrows(DiscountPercentInvalidException.class, () -> {
-            PrivateMethodTester.testerException(service, "verifyRequest", DiscountPercentInvalidException.class, rentalRequest);
+            PrivateMethodTester.testerException(service, "verifyRequestForRental", DiscountPercentInvalidException.class, rentalRequest);
         });
         // Assert
         Assertions.assertThat(exception).isNotNull();
         Assertions.assertThat(exception).isInstanceOf(DiscountPercentInvalidException.class);
         Assertions.assertThat(exception.getMessage()).isNotNull();
         Assertions.assertThat(exception.getMessage()).isEqualTo(DiscountPercentInvalidException.DEFAULT_MESSAGE);
+    }
+
+    @Test
+    void test_verifyRequestForReturn_ForRental_HappyPath() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        RentalRequest rentalRequest = RentalRequest.builder()
+                .code(data.getTools().get(0).getCode())
+                .build();
+        // Act
+        PrivateMethodTester.tester(service, "verifyRequestForReturn", rentalRequest);
+        // Assert
+        assertTrue(true, "We passed verification with no exceptions");
+    }
+
+    @Test
+    void test_verifyRequestForReturn_HappyPath_RequestForRentalEmpty() {
+        // Arrange
+        ToolRentalData data = buildTestingServiceWithData();
+        // Act
+        Exception exception = assertThrows(InvalidRentalRequestException.class, () -> {
+            PrivateMethodTester.testerException(service, "verifyRequestForReturn", InvalidRentalRequestException.class, (Object) null);
+        });
+        // Assert
+        Assertions.assertThat(exception).isNotNull();
+        Assertions.assertThat(exception).isInstanceOf(InvalidRentalRequestException.class);
+        Assertions.assertThat(exception.getMessage()).isNotNull();
+        Assertions.assertThat(exception.getMessage()).isEqualTo(InvalidRentalRequestException.DEFAULT_MESSAGE);
+    }
+
+    @Test
+    void test_verifyRequestForReturn_ForRental_HappyPat_NoToolCode() {
+        // Arrange
+        RentalRequest rentalRequest = RentalRequest.builder().build();
+        // Act
+        Exception exception = assertThrows(ToolCodeNotFoundException.class, () -> {
+            PrivateMethodTester.testerException(service, "verifyRequestForReturn", ToolCodeNotFoundException.class, rentalRequest);
+        });
+        // Assert
+        Assertions.assertThat(exception).isNotNull();
+        Assertions.assertThat(exception).isInstanceOf(ToolCodeNotFoundException.class);
+        Assertions.assertThat(exception.getMessage()).isNotNull();
+        Assertions.assertThat(exception.getMessage()).isEqualTo(ToolCodeNotFoundException.DEFAULT_MESSAGE);
     }
 
 

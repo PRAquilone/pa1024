@@ -112,7 +112,7 @@ INSERT INTO Holiday_Frequency (frequency)
 -- Populate the holidays table
 INSERT INTO Holidays (name, holiday_month, holiday_day, day_of_the_week, frequency)
     VALUES ('Independence Day', 7, 4, null, null),
-           ('Labor Day', null, null, 'Monday', 'First');
+           ('Labor Day', 9, null, 'Monday', 'First');
 
 -- Populate the valid statuses for rentals
 INSERT INTO Tool_Status (status)

@@ -22,7 +22,6 @@ public class RentalResponse {
     /**
      * Create a good response
      *
-     * @param status    The status to send
      * @param agreement The rental agreement
      * @return The created response
      */
@@ -31,6 +30,19 @@ public class RentalResponse {
                 .status(HttpStatus.OK)
                 .message("SUCCESS")
                 .agreement(agreement)
+                .build();
+    }
+
+    /**
+     * Create a good response for just success message
+     *
+     * @param message The message to send
+     * @return The created response
+     */
+    public static RentalResponse success(String message) {
+        return RentalResponse.builder()
+                .status(HttpStatus.OK)
+                .message(message)
                 .build();
     }
 

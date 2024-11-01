@@ -10,13 +10,14 @@ import com.toolsrus.rentals.exception.InvalidRentalRequestException;
 import com.toolsrus.rentals.exception.InvalidRentalRequestToolTypeNotFoundException;
 import com.toolsrus.rentals.exception.RentalDayCountInvalidException;
 import com.toolsrus.rentals.exception.ToolAlreadyRentedException;
+import com.toolsrus.rentals.exception.ToolCodeNotFoundException;
 import com.toolsrus.rentals.models.ChargeValues;
 import com.toolsrus.rentals.models.RentalRequest;
+import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Collection;
@@ -38,6 +39,23 @@ public class ToolRentalService {
         this.connector = toolRentalConnector;
     }
 
+    /**
+     * Rent a tool if possible
+     *
+     * @param request The rental request
+     */
+    public void returnRentalTool(RentalRequest request) throws InvalidRentalRequestException, ToolCodeNotFoundException {
+
+        // Verify the request
+        verifyRequestForReturn(request);
+
+        // Get the rental id from the table from the tool code
+        Long rentalId = connector.findRentalAgreementByCode(request.getCode());
+
+        // Attempt to update the row to be closed
+        connector.updateRentalAgreementToClosed(rentalId);
+
+    }
 
     /**
      * Rent a tool if possible
@@ -48,7 +66,7 @@ public class ToolRentalService {
     public RentalAgreement rentalTool(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException, InvalidRentalRequestToolTypeNotFoundException {
 
         // Verify the request
-        verifyRequest(request);
+        verifyRequestForRental(request);
 
         // Create response object
         RentalAgreement response;
@@ -146,8 +164,8 @@ public class ToolRentalService {
             BigDecimal discountDayCharge = determineDiscountAmount(request, fullDayCharge);
             charges.put(key, ChargeValues.builder()
                     .fullCharge(fullDayCharge)
-                    .discountedCharge(Optional.ofNullable(discountDayCharge).orElse(fullDayCharge))
-                    .chargeDaysCount(Optional.ofNullable(fullDayCharge).map(x -> 1).orElse(0))
+                    .discountedCharge(Optional.ofNullable(discountDayCharge).filter(x -> x.compareTo(BigDecimal.ZERO) != 0).orElse(fullDayCharge))
+                    .chargeDaysCount(Optional.ofNullable(fullDayCharge).filter(x -> x.compareTo(BigDecimal.ZERO) != 0).map(x -> 1).orElse(0))
                     .toolsCharge(toolCharge)
                     .build());
         }
@@ -240,11 +258,14 @@ public class ToolRentalService {
     private Boolean determineIfHoliday(LocalDate date) {
         Boolean isHoliday = false;
         for (Holiday holiday : connector.getData().getHolidays()) {
-            if (Optional.ofNullable(holiday.getHolidayDay()).isPresent()) {
+            if ((Optional.ofNullable(holiday.getHolidayDay()).isPresent()) &&
+                    (Optional.ofNullable(holiday.getHolidayMonth()).isPresent())) {
                 isHoliday = (date.getDayOfMonth() == holiday.getHolidayDay()) &&
                         (date.getMonth().getValue() == holiday.getHolidayMonth());
             }
-            if (Optional.ofNullable(holiday.getDayOfTheWeek()).isPresent()) {
+            if ((Optional.ofNullable(holiday.getDayOfTheWeek()).isPresent()) &&
+                    (Optional.ofNullable(holiday.getHolidayFrequency()).isPresent()) &&
+                    (Optional.ofNullable(holiday.getHolidayMonth()).isPresent())) {
                 // Since we only have first, then that is all I am implementing but would implement other if added
                 isHoliday = (isHoliday || (determineIfFirst(date, holiday) && determineIfMonthMatch(date, holiday) && determineIfDayOfWeekMatch(date, holiday)));
             }
@@ -271,7 +292,7 @@ public class ToolRentalService {
      * @return True if yes, false otherwise
      */
     private Boolean determineIfDayOfWeekMatch(LocalDate date, Holiday holiday) {
-        return Integer.valueOf(date.getDayOfWeek().getValue()).equals(DayOfWeek.valueOf(holiday.getDayOfTheWeek()).getValue());
+        return date.getDayOfWeek().toString().equalsIgnoreCase(holiday.getDayOfTheWeek());
     }
 
     /**
@@ -313,11 +334,23 @@ public class ToolRentalService {
      * @throws RentalDayCountInvalidException  Throws if rental day coint is less than 1
      * @throws DiscountPercentInvalidException Throws if discount is not between 0-100
      */
-    private void verifyRequest(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException {
+    private void verifyRequestForRental(RentalRequest request) throws InvalidRentalRequestException, RentalDayCountInvalidException, DiscountPercentInvalidException, ToolAlreadyRentedException {
         verifyRequestNotEmpty(request);
         verifyValidRentalNumberOfDays(request);
         verifyCorrectDiscountAmount(request);
         verifyToolNotAlreadyRentedOut(request);
+    }
+
+    /**
+     * Verify the rental request object is valid for processing
+     *
+     * @param request The rental request
+     * @throws InvalidRentalRequestException Throws if request is empty
+     * @throws ToolCodeNotFoundException     Throws if rental day coint is less than 1
+     */
+    private void verifyRequestForReturn(RentalRequest request) throws InvalidRentalRequestException, ToolCodeNotFoundException {
+        verifyRequestNotEmpty(request);
+        verifyRequestToolCodeNotEmpty(request);
     }
 
     /**
@@ -356,6 +389,19 @@ public class ToolRentalService {
     private void verifyRequestNotEmpty(RentalRequest request) throws InvalidRentalRequestException {
         if (Optional.ofNullable(request).isEmpty()) {
             throw new InvalidRentalRequestException();
+        }
+    }
+
+    /**
+     * Verify that the request is not empty
+     *
+     * @param request The request object
+     * @throws ToolCodeNotFoundException Thrown if the request is empty
+     */
+    private void verifyRequestToolCodeNotEmpty(RentalRequest request) throws ToolCodeNotFoundException {
+        if ((Optional.ofNullable(request).isPresent()) &&
+                (StringUtils.isBlank(request.getCode()))) {
+            throw new ToolCodeNotFoundException();
         }
     }
 
