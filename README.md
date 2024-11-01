@@ -17,6 +17,7 @@ The demonstration is to code and test a simple tool rental application.
 * Some tools are free of charge on weekends or holidays.
 * Clerks may give customers a discount that is applied to the total daily charges to reduce the final
   charge.
+* Simple tool that does not build out the ability to add or change tools or charges or holidays.  This will assume that another tool has populated the database tables. Possibly a future feature would to build out the rest to allow for adding/updating a tool or holidays or charge amounts.
 
 ### Assumptions, Choices and Notes
 
