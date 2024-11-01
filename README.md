@@ -36,6 +36,16 @@ days)
 * Discount percent - As a whole number, 0-100 (e.g. 20 = 20%)
 * Check out date
 
+Sample Request:
+```declarative
+{
+    "code": "LADW",
+    "rentalDayCount" : 3,
+    "discount": 10,
+    "checkOutDate": "2024-10-20"
+}
+```
+
 ### Response - Rental Agreement
 If the tool can be rented then a rental agreement object is created and returned.  The rental agreement contains the following information:
 * Tool code - Specified at checkout
@@ -53,6 +63,31 @@ to cents.
 * Discount amount - calculated from discount % and pre-discount charge. Resulting amount
 rounded half up to cents.
 * Final charge - Calculated as pre-discount charge - discount amount.
+
+Sample Response (for the sample request above)
+```declarative
+{
+    "agreement": {
+        "rentalId": 1,
+        "code": "LADW",
+        "type": "Ladder",
+        "brand": "Werner",
+        "rentalDays": 3,
+        "checkOutDate": "2024-10-20",
+        "dueDate": "2024-10-23",
+        "chargeDays": 3,
+        "due": 5.373,
+        "dailyCharge": 1.99,
+        "preDiscountCharge": 5.97,
+        "discountPercent": 10,
+        "discountAmount": 0.597,
+        "finalCharge": 5.373,
+        "toolStatus": "ACTIVE"
+    },
+    "message": "SUCCESS",
+    "status": "OK"
+}
+```
 
 ### Required Exceptions
 Below is the list of required exceptions
