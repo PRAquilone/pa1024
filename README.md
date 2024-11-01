@@ -24,6 +24,7 @@ The demonstration is to code and test a simple tool rental application.
 This is a list of assumptions or choices made with respect to the requirments
 
 * Assumption to create only a back end REST API since no UI was required .
+* Assumption to not create CRUD operations for table data like Tools, Types, Vendors, Holidays, etc.  For this project assumed to be handled elsewhere and this simply rents out a tool.
 * Decision to use an in memory H2 Database which if was a real application would be replaced with a hosted DB. However it will be coded so that the connector implementation could simply be replaced with another database connection and not interrupt the rest of the code.
 * Decision to have all important static DB data (data not changing outside of initial data load) be pre-loaded when the first request comes in. This does sacrifice memory for faster performance. If this was a real POS this would have to be replaced with appropriate data calls to load the data that is specifically needed. For example, the ToolsCharges table would only load the row for the tool to be rented whereas here the entire table is loaded.
 * Decision to use gradle to build the project because I find it more flexible and readable than maven
