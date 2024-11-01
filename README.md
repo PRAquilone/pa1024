@@ -48,10 +48,10 @@ days)
 Sample Rental Request:
 ```declarative
 {
-"code": "LADW",
-"rentalDayCount" : 3,
-"discount": 10,
-"checkOutDate": "2024-10-20"
+    "code": "LADW",
+    "rentalDayCount" : 3,
+    "discount": 10,
+    "checkOutDate": "2024-10-20"
 }
 ```
 
