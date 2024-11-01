@@ -83,25 +83,25 @@ rounded half up to cents.
 Sample Rental Response (for the sample request above)
 ```declarative
 {
-"agreement": {
-"rentalId": 1,
-"code": "LADW",
-"type": "Ladder",
-"brand": "Werner",
-"rentalDays": 3,
-"checkOutDate": "2024-10-20",
-"dueDate": "2024-10-23",
-"chargeDays": 3,
-"due": 5.373,
-"dailyCharge": 1.99,
-"preDiscountCharge": 5.97,
-"discountPercent": 10,
-"discountAmount": 0.597,
-"finalCharge": 5.373,
-"toolStatus": "ACTIVE"
-},
-"message": "SUCCESS",
-"status": "OK"
+    "agreement": {
+        "rentalId": 1,
+        "code": "LADW",
+        "type": "Ladder",
+        "brand": "Werner",
+        "rentalDays": 3,
+        "checkOutDate": "2024-10-20",
+        "dueDate": "2024-10-23",
+        "chargeDays": 3,
+        "due": 5.373,
+        "dailyCharge": 1.99,
+        "preDiscountCharge": 5.97,
+        "discountPercent": 10,
+        "discountAmount": 0.597,
+        "finalCharge": 5.373,
+        "toolStatus": "ACTIVE"
+    },
+    "message": "SUCCESS",
+    "status": "OK"
 }
 ```
 
